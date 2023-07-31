@@ -22,15 +22,14 @@ Y_MAX = 220
 Z_MAX = 250
 
 # PROCESS VALUES (in mm unless otherwuise noted)
-EDGE_LENGTH = 5
 XYZ_FEEDRATE = 1125 # Standard is 1125
 E_FEEDRATE = 2700 # Adjust as needed
 DROPLET_SIZE = 3
 TIP_HEIGHT = 3
 
-
 # Wafer specific global vars (in mm unless otherwuise noted)
 WAFER_DIAM = 101.6 # 4in wafer
+EDGE_LENGTH = 5 # How far in from the wafer edge to scan
 
 #################################
 ########### BEGIN CODE ##########
@@ -117,6 +116,11 @@ def GCodeCircle(lst, x_start, y_start, x_center, y_center):
 
 
 def doWaferScan(lst):
+    """
+    Centers the head over the wafer, moves tip back up.
+    Moves the head to the start of the rotation, and scans 
+    the wafer in concentric circles.
+    """
     rotation_count = 0 
     max_radius = (WAFER_DIAM/2) - EDGE_LENGTH
     max_rotations = math.floor(max_radius/ DROPLET_SIZE)
