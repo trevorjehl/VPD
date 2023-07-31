@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 .DS_Store
-office_sounds.wav
+*.gcode
 
 .vscode/*
 !.vscode/settings.json

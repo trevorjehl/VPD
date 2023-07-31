@@ -58,7 +58,6 @@ def extrudeInPlace(lst, amount):
     lst.append(f"G1 E{amount}")
     return(lst)
 
-
 def relativePos(lst):
     lst.append("G91 ; Set all axes to relative")
     return lst
