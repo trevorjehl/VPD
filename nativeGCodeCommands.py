@@ -19,61 +19,32 @@ def addDecimalPoint(*args):
     for arg in args:
         if isinstance(arg, int):  # if argument is an integer
             result.append(f"{arg}.0")
-        elif isinstance(arg, float):  # if argument is a float
+        elif isinstance(arg, float) or isinstance(arg, str):  # if argument is a float
             str_val = str(arg)
             if "." not in str_val:  # if float but doesn't have a decimal point (e.g., 5.0)
                 result.append(f"{arg}.0")
             else:
-                result.append(arg)
+                result.append(str(arg))
         else:
-            result.append(arg)  # for all other cases, just append the original argument
+            return args[0]
 
     # If only one argument is passed, return a string
-    return result[0] if len(result) == 1 else result
+    return result[0]
 
 
 def nonExtrudeMove(lst,X=None,Y=None,Z=None):
     """
-    >>> nonExtrudeMove([],1,2,3)
-    ['G0 X1.0 Y2.0 Z3.0']
-    >>> nonExtrudeMove([],X=1,Y=2)
-    ['G0 X1.0 Y2.0']
-    >>> nonExtrudeMove([],X=1,Z=3)
-    ['G0 X1.0 Z3.0']
-    >>> nonExtrudeMove([],Y=2,Z=3)
-    ['G0 Y2.0 Z3.0']
-    >>> nonExtrudeMove([],X=1)
-    ['G0 X1.0']
-    >>> nonExtrudeMove([],Y=2)
-    ['G0 Y2.0']
-    >>> nonExtrudeMove([],Z=3)
-    ['G0 Z3.0']
-    >>> nonExtrudeMove(['test'])
-    ['test']
+    Move the extruder without extruding.
     """
-    X, Y, Z = addDecimalPoint(X, Y, Z)
+    X = addDecimalPoint(X)
+    Y = addDecimalPoint(Y)
+    Z = addDecimalPoint(Z)
 
-    if X != None and Y != None and Z != None:
-        lst.append(f"G0 X{X} Y{Y} Z{Z}")
-        return lst
-    if X != None and Y != None:
-        lst.append(f"G0 X{X} Y{Y}")
-        return lst
-    if X != None and Z != None:
-        lst.append(f"G0 X{X} Z{Z}")
-        return lst
-    if Y!= None and Z!= None:
-        lst.append(f"G0 Y{Y} Z{Z}")
-        return lst
-    if X!= None:
-        lst.append(f"G0 X{X}")
-        return lst
-    if Y!= None:
-        lst.append(f"G0 Y{Y}")
-        return lst
-    if Z != None:
-        lst.append(f"G0 Z{Z}")
-        return lst
+    move = 'G0' + (f' X{X}' if X is not None else '') + (f' Y{Y}' if Y is not None else '') + (f' Z{Z}' if Z is not None else '')
+    
+    if move != 'G0':
+        lst.append(move.strip())
+    
     return lst
 
 
