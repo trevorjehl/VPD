@@ -77,7 +77,7 @@ def GCodeCircle(lst, x_start, y_start, x_center, y_center):
     using linear moves to approximate a circle.
     """ 
     # How long (in mm) should the head linearly travel?
-    given_path_length = 5
+    given_path_length = 1
     
     # Calculate current angles
     start_angle = math.atan2(y_start - y_center, x_start - x_center)
