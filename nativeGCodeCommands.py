@@ -57,3 +57,11 @@ def doCircle(lst, xCenterOffset, yCenterOffset):
     """
     lst.append(f"G2 I{xCenterOffset} J{yCenterOffset}")
     return lst
+
+def extrudeInPlace(lst, amount):
+    """
+    >>> extrudeInPlace([], 5)
+    ['G1 E5']
+    """
+    lst.append(f"G1 E{amount}")
+    return(lst)
