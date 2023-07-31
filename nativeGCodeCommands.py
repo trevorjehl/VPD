@@ -48,28 +48,6 @@ def nonExtrudeMove(lst,X=None,Y=None,Z=None):
     return lst
 
 
-def doCircle(lst, xCenterOffset = None, yCenterOffset = None):
-    """
-    Moves the printehead in a complete circle around the point
-    specified by "xCenterOffset" and "yCenterOffset." Those two
-    params are relative, not absolute.
-
-    >>> doCircle([], 20, 20)
-    ['G2 I20.0 J20.0']
-    >>> doCircle([], xCenterOffset = 39.8)
-    ['G2 I39.8']
-    """
-    xCenterOffset, yCenterOffset = addDecimalPoint(xCenterOffset, yCenterOffset)
-
-    if xCenterOffset!= None and yCenterOffset!= None:
-        lst.append(f"G2 I{xCenterOffset} J{yCenterOffset}")
-    elif xCenterOffset!= None:
-        lst.append(f"G2 I{xCenterOffset}")
-    elif yCenterOffset!= None:
-        lst.append(f"G2 J{yCenterOffset}")
-    return lst
-
-
 def extrudeInPlace(lst, amount):
     """
     >>> extrudeInPlace([], 5)
