@@ -50,13 +50,23 @@ def nonExtrudeMove(lst,X=None,Y=None,Z=None):
     return lst
 
 
-def doCircle(lst, xCenterOffset, yCenterOffset):
+def doCircle(lst, xCenterOffset = None, yCenterOffset = None):
     """
+    Moves the printehead in a complete circle around the point
+    specified by "xCenterOffset" and "yCenterOffset." Those two
+    params are relative, not absolute.
+
     >>> doCircle([], 20, 20)
     ['G2 I20 J20']
     """
-    lst.append(f"G2 I{xCenterOffset} J{yCenterOffset}")
+    if xCenterOffset!= None and yCenterOffset!= None:
+        lst.append(f"G2 I{xCenterOffset} J{yCenterOffset}")
+    if xCenterOffset!= None:
+        lst.append(f"G2 J{yCenterOffset}")
+    if yCenterOffset!= None:
+        lst.append(f"G2 J{yCenterOffset}")
     return lst
+
 
 def extrudeInPlace(lst, amount):
     """
@@ -65,3 +75,12 @@ def extrudeInPlace(lst, amount):
     """
     lst.append(f"G1 E{amount}")
     return(lst)
+
+
+def relativePos(lst):
+    lst.append("G91 ; Set all axes to relative")
+    return lst
+
+def absPos(lst):
+    lst.append("G90 ; Set all axes to absolute")
+    return lst

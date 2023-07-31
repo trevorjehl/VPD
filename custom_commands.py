@@ -13,11 +13,9 @@ __version__ = "0.1.0"
 # __license__ = "MIT"
 
 import os
+import math
 from pygcode import *
 from nativeGCodeCommands import *
-
-# Create a list of all commands
-COMMANDS = []
 
 #ENDER 3 CONSTRAINTS
 X_MAX = 220
@@ -28,6 +26,8 @@ Z_MAX = 250
 EDGE_LENGTH = 5
 XYZ_FEEDRATE = 1125 # Standard is 1125
 E_FEEDRATE = 2700 # Adjust as needed
+DROPLET_SIZE = 3
+TIP_HEIGHT = 3
 
 
 # Wafer specific global vars (in mm unless otherwuise noted)
@@ -35,6 +35,9 @@ WAFER_DIAM = 101.6 # 4in wafer
 
 
 def startGCode(lst):
+    """
+    Housekeeping -- mainly homes and then moves up.
+    """
     lst.append("G21 ; set units to millimeters")
     lst.append("M82 ;absolute extrusion mode")
     lst.append("M302 S0; always allow extrusion (disable checking)")
@@ -53,12 +56,29 @@ def startGCode(lst):
 def centerHead(lst):
     nonExtrudeMove(lst, Z=3)
     nonExtrudeMove(lst, X=(X_MAX/2), Y=(Y_MAX)/2)
-    nonExtrudeMove(nonExtrudeMove(lst, Z=0.2))
+    nonExtrudeMove(nonExtrudeMove(lst, Z=1))
 
     return lst
 
 
+def doWaferScan(lst):
+    rotation_count = 0 
+    max_radius = (WAFER_DIAM/2) - EDGE_LENGTH
+    max_rotations = math.floor(max_radius/ DROPLET_SIZE)
+
+    centerHead(lst) # Keep pos in absolute 
+    # Initial move to edge of wafer
+    nonExtrudeMove(lst, X=(X_MAX + max_radius), Z=TIP_HEIGHT)
+
+    while rotation_count < max_rotations:
+        doCircle(lst, xCenterOffset=(X_MAX + max_radius - (rotation_count * DROPLET_SIZE)))
+        nonExtrudeMove(lst, x)
+
+
 def endGCode(lst):
+    """
+    End G-Code raizes the Z axis and presents the wafer.
+    """
     lst.append("G91 ;Relative positioning")
     lst.append("G1 Z10 ; Raise Z")
     lst.append("G90 ;Absolute positioning")
