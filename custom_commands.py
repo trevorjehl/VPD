@@ -14,7 +14,6 @@ __version__ = "0.1.0"
 
 import os
 import math
-from pygcode import *
 from nativeGCodeCommands import *
 
 #ENDER 3 CONSTRAINTS
@@ -33,11 +32,16 @@ TIP_HEIGHT = 3
 # Wafer specific global vars (in mm unless otherwuise noted)
 WAFER_DIAM = 101.6 # 4in wafer
 
+#################################
+########### BEGIN CODE ##########
+#################################
 
 def startGCode(lst):
     """
     Housekeeping -- mainly homes and then moves up.
     """
+    lst.append("; BEGIN START GCODE")
+
     lst.append("G21 ; set units to millimeters")
     lst.append("M82 ;absolute extrusion mode")
     lst.append("M302 S0; always allow extrusion (disable checking)")
@@ -46,17 +50,68 @@ def startGCode(lst):
     lst.append("G90; Absolute positioning")
     lst.append("G92 E0 X0 Y0 Z0; Set home position")
     #Set extruder feedrate
-    lst.append(f"G1 F{E_FEEDRATE} E0")
+    lst.append(f"M203 E{E_FEEDRATE}")
     #Set XYZ feedrate, move up
-    lst.append("G1 Z2.0 F{E_FEEDRATE} ; Move up to prevent scrating")
+    lst.append(f"M203 X{XYZ_FEEDRATE} Y{XYZ_FEEDRATE} Z{XYZ_FEEDRATE}")
+    lst.append(f"G1 Z2.0; Move up to prevent scrating")
+
+    lst.append("; END START GCODE")
 
     return lst
 
 
 def centerHead(lst):
+    lst.append("; BEGIN CENTER HEAD")
     nonExtrudeMove(lst, Z=3)
     nonExtrudeMove(lst, X=(X_MAX/2), Y=(Y_MAX)/2)
     nonExtrudeMove(nonExtrudeMove(lst, Z=1))
+
+    lst.append("; END CENTER HEAD")
+
+    return lst
+
+
+def GCodeCircle(lst, x_start, y_start, x_center, y_center):
+    """
+    Since arc movements are not universally interpreted, 
+    creates a fragmented circular movement system by 
+    using linear moves to approximate a circle.
+    """ 
+    # How long (in mm) should the head linearly travel?
+    given_path_length = 5
+    
+    # Calculate current angles
+    start_angle = math.atan2(y_start - y_center, x_start - x_center)
+
+    radius = math.sqrt((x_start - x_center)**2 + (y_start - y_center)**2)
+    print("rad" + str(radius))
+    
+    segments = 1
+    angle_step = (2 * math.pi) / segments
+    # Calculate actual path length
+    act_path_length = angle_step * radius
+    print("act path length: " + str(act_path_length))
+
+    # Optimzie segment length
+    while (given_path_length - act_path_length) < (given_path_length - (given_path_length*0.1)):
+        segments += 1
+        angle_step = (2 * math.pi) / segments
+        act_path_length = angle_step * radius
+
+    # '+1' ensures the circle closes
+    for segment in range(segments + 1):
+        # Calculate segment angle
+        segment_angle = start_angle - angle_step * segment
+
+        # Calculate the segment endpoint
+        dx = radius * math.cos(segment_angle)
+        dy = radius * math.sin(segment_angle)
+        
+        x = x_center + dx
+        y = y_center + dy
+
+        #Create the G-Code for the segment
+        nonExtrudeMove(lst, f"{x:.4f}", f"{y:.4f}")
 
     return lst
 
@@ -66,13 +121,21 @@ def doWaferScan(lst):
     max_radius = (WAFER_DIAM/2) - EDGE_LENGTH
     max_rotations = math.floor(max_radius/ DROPLET_SIZE)
 
-    centerHead(lst) # Keep pos in absolute 
-    # Initial move to edge of wafer
-    nonExtrudeMove(lst, X=(X_MAX + max_radius), Z=TIP_HEIGHT)
+    centerHead(lst) # Keep pos in absolute
+    nonExtrudeMove(lst, Z=TIP_HEIGHT)
 
     while rotation_count < max_rotations:
-        doCircle(lst, xCenterOffset=(X_MAX + max_radius - (rotation_count * DROPLET_SIZE)))
-        nonExtrudeMove(lst, x)
+        current_offset = max_radius - (rotation_count * DROPLET_SIZE) 
+
+        # Move the head in a bit.
+        lst.append(";Move the head in.")
+        nonExtrudeMove(lst, X=(X_MAX/2) + current_offset)
+
+        GCodeCircle(lst, ((X_MAX/2) + current_offset), Y_MAX/2, (X_MAX/2), (Y_MAX / 2))
+        
+        rotation_count += 1
+    
+    return lst
 
 
 def endGCode(lst):

@@ -11,12 +11,19 @@ __version__ = "0.1.0"
 __license__ = "MIT"
 
 from custom_commands import *
+import sys
 
 def main():
     """ Main entry point of the app """
+    commands = []
     args = sys.argv[1:]
     filename = args[0]
-    
+
+    startGCode(commands)
+    doWaferScan(commands)
+    endGCode(commands)
+
+    write_to_gcode(commands, filename)
 
 
 if __name__ == "__main__":

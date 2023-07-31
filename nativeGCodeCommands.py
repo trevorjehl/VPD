@@ -58,12 +58,14 @@ def doCircle(lst, xCenterOffset = None, yCenterOffset = None):
 
     >>> doCircle([], 20, 20)
     ['G2 I20 J20']
+    >>> doCircle([], xCenterOffset = 39.8)
+    ['G2 I39.8']
     """
     if xCenterOffset!= None and yCenterOffset!= None:
         lst.append(f"G2 I{xCenterOffset} J{yCenterOffset}")
-    if xCenterOffset!= None:
-        lst.append(f"G2 J{yCenterOffset}")
-    if yCenterOffset!= None:
+    elif xCenterOffset!= None:
+        lst.append(f"G2 I{xCenterOffset}")
+    elif yCenterOffset!= None:
         lst.append(f"G2 J{yCenterOffset}")
     return lst
 
@@ -84,3 +86,4 @@ def relativePos(lst):
 def absPos(lst):
     lst.append("G90 ; Set all axes to absolute")
     return lst
+
