@@ -16,6 +16,10 @@ import os
 import math
 from nativeGCodeCommands import *
 
+#################################
+### CUSTOMIZE VARIABLES BELOW ###
+#################################
+
 #ENDER 3 CONSTRAINTS
 X_MAX = 220
 Y_MAX = 220
@@ -26,6 +30,7 @@ XYZ_FEEDRATE = 1125 # Standard is 1125
 E_FEEDRATE = 2700 # Adjust as needed
 DROPLET_SIZE = 3
 TIP_HEIGHT = 3
+MAX_PATH_LENGTH = 3 # How long (in mm) should the head linearly travel?
 
 # Wafer specific global vars (in mm unless otherwuise noted)
 WAFER_DIAM = 101.6 # 4in wafer
@@ -76,9 +81,6 @@ def GCodeCircle(lst, x_start, y_start, x_center, y_center):
     creates a fragmented circular movement system by 
     using linear moves to approximate a circle.
     """ 
-    # How long (in mm) should the head linearly travel?
-    given_path_length = 3
-    
     # Calculate current angles
     start_angle = math.atan2(y_start - y_center, x_start - x_center)
 
@@ -92,7 +94,7 @@ def GCodeCircle(lst, x_start, y_start, x_center, y_center):
     print("act path length: " + str(act_path_length))
 
     # Optimzie segment length
-    while (given_path_length - act_path_length) < (given_path_length - (given_path_length*0.1)):
+    while (MAX_PATH_LENGTH - act_path_length) < (MAX_PATH_LENGTH - (MAX_PATH_LENGTH*0.1)):
         segments += 1
         angle_step = (2 * math.pi) / segments
         act_path_length = angle_step * radius
