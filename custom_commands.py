@@ -26,11 +26,12 @@ Y_MAX = 220
 Z_MAX = 250
 
 # PROCESS VALUES (in mm unless otherwuise noted)
-XYZ_FEEDRATE = 1125 # Standard is 1125
+TRAVEL_FEEDRATE = 5000 # Standard is 1125
+EXTRUDE_FEEDRATE = 1500
 E_FEEDRATE = 2700 # Adjust as needed
-DROPLET_SIZE = 3
+DROPLET_SIZE = 1
 TIP_HEIGHT = 3
-MAX_PATH_LENGTH = 3 # How long (in mm) should the head linearly travel?
+MAX_PATH_LENGTH = 1 # How long (in mm) should the head linearly travel?
 
 # Wafer specific global vars (in mm unless otherwuise noted)
 WAFER_DIAM = 101.6 # 4in wafer
@@ -56,7 +57,7 @@ def startGCode(lst):
     #Set extruder feedrate
     lst.append(f"M203 E{E_FEEDRATE}")
     #Set XYZ feedrate, move up
-    lst.append(f"M203 X{XYZ_FEEDRATE} Y{XYZ_FEEDRATE} Z{XYZ_FEEDRATE}")
+    # lst.append(f"M203 X{TRAVEL_FEEDRATE} Y{TRAVEL_FEEDRATE} Z{TRAVEL_FEEDRATE}")
     lst.append(f"G1 Z2.0; Move up to prevent scrating")
 
     lst.append("; END START GCODE")
@@ -66,9 +67,9 @@ def startGCode(lst):
 
 def centerHead(lst):
     lst.append("; BEGIN CENTER HEAD")
-    nonExtrudeMove(lst, Z=3)
-    nonExtrudeMove(lst, X=(X_MAX/2), Y=(Y_MAX)/2)
-    nonExtrudeMove(nonExtrudeMove(lst, Z=1))
+    nonExtrudeMove(lst, TRAVEL_FEEDRATE, Z=3)
+    nonExtrudeMove(lst, TRAVEL_FEEDRATE, X=(X_MAX/2), Y=(Y_MAX)/2)
+    nonExtrudeMove(lst, TRAVEL_FEEDRATE, Z=1)
 
     lst.append("; END CENTER HEAD")
 
@@ -85,13 +86,13 @@ def GCodeCircle(lst, x_start, y_start, x_center, y_center):
     start_angle = math.atan2(y_start - y_center, x_start - x_center)
 
     radius = math.sqrt((x_start - x_center)**2 + (y_start - y_center)**2)
-    print("rad" + str(radius))
+    # print("rad" + str(radius))
     
     segments = 1
     angle_step = (2 * math.pi) / segments
     # Calculate actual path length
     act_path_length = angle_step * radius
-    print("act path length: " + str(act_path_length))
+    # print("act path length: " + str(act_path_length))
 
     # Optimzie segment length
     while (MAX_PATH_LENGTH - act_path_length) < (MAX_PATH_LENGTH - (MAX_PATH_LENGTH*0.1)):
@@ -116,6 +117,14 @@ def GCodeCircle(lst, x_start, y_start, x_center, y_center):
 
     return lst
 
+def calcRelPos(xAbs, yAbs, xPoint, yPoint):
+    """
+    Given a point in space (xPoint, yPoint) and
+    the current absolute position, calculate the
+    XY vector to travel from the abs to the point.
+    """
+    return (xPoint - xAbs, yPoint - yAbs)
+
 
 def doWaferScan(lst):
     """
@@ -128,17 +137,20 @@ def doWaferScan(lst):
     max_rotations = math.floor(max_radius/ DROPLET_SIZE)
 
     centerHead(lst) # Keep pos in absolute
-    nonExtrudeMove(lst, Z=TIP_HEIGHT)
+    nonExtrudeMove(lst, TRAVEL_FEEDRATE, Z=TIP_HEIGHT)
 
     while rotation_count < max_rotations:
         current_offset = max_radius - (rotation_count * DROPLET_SIZE) 
 
         # Move the head in a bit.
         lst.append(";Move the head in.")
-        nonExtrudeMove(lst, X=(X_MAX/2) + current_offset)
+        nonExtrudeMove(lst,  EXTRUDE_FEEDRATE, X=(X_MAX/2) + current_offset)
 
-        GCodeCircle(lst, ((X_MAX/2) + current_offset), Y_MAX/2, (X_MAX/2), (Y_MAX / 2))
-        
+        # GCodeCircle(lst, ((X_MAX/2) + current_offset), Y_MAX/2, (X_MAX/2), (Y_MAX / 2))
+        xRel, yRel = calcRelPos((X_MAX/2) + current_offset, Y_MAX/2, (X_MAX/2), (Y_MAX / 2))
+
+        doCircle(lst, xRel, yRel)
+
         rotation_count += 1
     
     return lst

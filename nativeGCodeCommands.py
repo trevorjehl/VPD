@@ -32,7 +32,7 @@ def addDecimalPoint(*args):
     return result[0]
 
 
-def nonExtrudeMove(lst,X=None,Y=None,Z=None):
+def nonExtrudeMove(lst,feedrate, X=None,Y=None,Z=None):
     """
     Move the extruder without extruding.
     """
@@ -40,11 +40,31 @@ def nonExtrudeMove(lst,X=None,Y=None,Z=None):
     Y = addDecimalPoint(Y)
     Z = addDecimalPoint(Z)
 
-    move = 'G0' + (f' X{X}' if X is not None else '') + (f' Y{Y}' if Y is not None else '') + (f' Z{Z}' if Z is not None else '')
+    move = 'G0' + (f' X{X}' if X is not None else '') + (f' Y{Y}' if Y is not None else '') + (f' Z{Z}' if Z is not None else '') + f" F{feedrate}"
     
     if move != 'G0':
         lst.append(move.strip())
     
+    return lst
+
+def doCircle(lst, xCenterOffset = None, yCenterOffset = None):
+    """
+    Moves the printehead in a complete circle around the point
+    specified by "xCenterOffset" and "yCenterOffset." Those two
+    params are relative, not absolute.
+    >>> doCircle([], 20, 20)
+    ['G2 I20 J20']
+    """
+    if xCenterOffset!= None and yCenterOffset!= None:
+        lst.append(f"G2 I{xCenterOffset:.4f} J{yCenterOffset:.4f}")
+
+    elif xCenterOffset or yCenterOffset == None:
+        if xCenterOffset == None:
+            lst.append(f"G2 J{yCenterOffset:.4f}")
+            print("second if")
+        if yCenterOffset == None:
+            lst.append(f"G2 I{xCenterOffset:.4f}")
+            print("third if")
     return lst
 
 
