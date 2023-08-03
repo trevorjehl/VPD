@@ -27,8 +27,7 @@ Z_MAX = 250
 
 # PROCESS VALUES (in mm unless otherwuise noted)
 TRAVEL_FEEDRATE = 5000 # Standard is 1125
-EXTRUDE_FEEDRATE = 1500
-E_FEEDRATE = 2700 # Adjust as needed
+E_FEEDRATE = 1500 # Adjust as needed
 DROPLET_SIZE = 1
 TIP_HEIGHT = 3
 MAX_PATH_LENGTH = 1 # How long (in mm) should the head linearly travel?
@@ -76,47 +75,6 @@ def centerHead(lst):
     return lst
 
 
-def GCodeCircle(lst, x_start, y_start, x_center, y_center):
-    """
-    Since arc movements are not universally interpreted, 
-    creates a fragmented circular movement system by 
-    using linear moves to approximate a circle.
-    """ 
-    # Calculate current angles
-    start_angle = math.atan2(y_start - y_center, x_start - x_center)
-
-    radius = math.sqrt((x_start - x_center)**2 + (y_start - y_center)**2)
-    # print("rad" + str(radius))
-    
-    segments = 1
-    angle_step = (2 * math.pi) / segments
-    # Calculate actual path length
-    act_path_length = angle_step * radius
-    # print("act path length: " + str(act_path_length))
-
-    # Optimzie segment length
-    while (MAX_PATH_LENGTH - act_path_length) < (MAX_PATH_LENGTH - (MAX_PATH_LENGTH*0.1)):
-        segments += 1
-        angle_step = (2 * math.pi) / segments
-        act_path_length = angle_step * radius
-
-    # '+1' ensures the circle closes
-    for segment in range(segments + 1):
-        # Calculate segment angle
-        segment_angle = start_angle - angle_step * segment
-
-        # Calculate the segment endpoint
-        dx = radius * math.cos(segment_angle)
-        dy = radius * math.sin(segment_angle)
-        
-        x = x_center + dx
-        y = y_center + dy
-
-        #Create the G-Code for the segment
-        nonExtrudeMove(lst, f"{x:.4f}", f"{y:.4f}")
-
-    return lst
-
 def calcRelPos(xAbs, yAbs, xPoint, yPoint):
     """
     Given a point in space (xPoint, yPoint) and
@@ -125,6 +83,13 @@ def calcRelPos(xAbs, yAbs, xPoint, yPoint):
     """
     return (xPoint - xAbs, yPoint - yAbs)
 
+def depositSample(lst):
+    """
+    Using the cuevette measurements (found in
+    global variables), move up, move over, move down,
+    and deposit the scanned droplet.
+    """
+    pass
 
 def doWaferScan(lst):
     """
@@ -144,7 +109,7 @@ def doWaferScan(lst):
 
         # Move the head in a bit.
         lst.append(";Move the head in.")
-        nonExtrudeMove(lst,  EXTRUDE_FEEDRATE, X=(X_MAX/2) + current_offset)
+        nonExtrudeMove(lst,  E_FEEDRATE, X=(X_MAX/2) + current_offset)
 
         # GCodeCircle(lst, ((X_MAX/2) + current_offset), Y_MAX/2, (X_MAX/2), (Y_MAX / 2))
         xRel, yRel = calcRelPos((X_MAX/2) + current_offset, Y_MAX/2, (X_MAX/2), (Y_MAX / 2))
@@ -181,3 +146,45 @@ def write_to_gcode(lst, filename):
     
     # Close the file, writing the lines.
     f.close()
+
+
+# def GCodeCircle(lst, x_start, y_start, x_center, y_center):
+#     """
+#     Since arc movements are not universally interpreted, 
+#     creates a fragmented circular movement system by 
+#     using linear moves to approximate a circle.
+#     """ 
+#     # Calculate current angles
+#     start_angle = math.atan2(y_start - y_center, x_start - x_center)
+
+#     radius = math.sqrt((x_start - x_center)**2 + (y_start - y_center)**2)
+#     # print("rad" + str(radius))
+    
+#     segments = 1
+#     angle_step = (2 * math.pi) / segments
+#     # Calculate actual path length
+#     act_path_length = angle_step * radius
+#     # print("act path length: " + str(act_path_length))
+
+#     # Optimzie segment length
+#     while (MAX_PATH_LENGTH - act_path_length) < (MAX_PATH_LENGTH - (MAX_PATH_LENGTH*0.1)):
+#         segments += 1
+#         angle_step = (2 * math.pi) / segments
+#         act_path_length = angle_step * radius
+
+#     # '+1' ensures the circle closes
+#     for segment in range(segments + 1):
+#         # Calculate segment angle
+#         segment_angle = start_angle - angle_step * segment
+
+#         # Calculate the segment endpoint
+#         dx = radius * math.cos(segment_angle)
+#         dy = radius * math.sin(segment_angle)
+        
+#         x = x_center + dx
+#         y = y_center + dy
+
+#         #Create the G-Code for the segment
+#         nonExtrudeMove(lst, f"{x:.4f}", f"{y:.4f}")
+
+#     return lst
