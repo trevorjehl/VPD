@@ -28,9 +28,16 @@ Z_MAX = 250
 # PROCESS VALUES (in mm unless otherwuise noted)
 TRAVEL_FEEDRATE = 5000 # Standard is 1125
 E_FEEDRATE = 1500 # Adjust as needed
+DISPENSE_FEEDRATE = 1000 # Feedrate for moving the syringe
 DROPLET_SIZE = 1
 TIP_HEIGHT = 3
-MAX_PATH_LENGTH = 1 # How long (in mm) should the head linearly travel?
+TRAVEL_HEIGHT = 40
+
+CUEVETTE_X = 200
+CUEVETTE_LIP_Y = 25
+CUEVETTE_BOTTOM_HEIGHT = 10
+
+# DEPRECIATED MAX_PATH_LENGTH = 1 # How long (in mm) should the head linearly travel?
 
 # Wafer specific global vars (in mm unless otherwuise noted)
 WAFER_DIAM = 101.6 # 4in wafer
@@ -89,7 +96,16 @@ def depositSample(lst):
     global variables), move up, move over, move down,
     and deposit the scanned droplet.
     """
-    pass
+    # move up
+    nonExtrudeMove(lst, TRAVEL_FEEDRATE, Z = TRAVEL_HEIGHT)
+    #move over cuevette
+    nonExtrudeMove(lst, TRAVEL_FEEDRATE, X = CUEVETTE_X, Y = (CUEVETTE_LIP_Y + 3))
+    #Go in to the cuevette
+    nonExtrudeMove(lst, TRAVEL_FEEDRATE, Z = CUEVETTE_BOTTOM_HEIGHT)
+    # Go back up
+    nonExtrudeMove(lst, TRAVEL_FEEDRATE, X = CUEVETTE_X, Y = (CUEVETTE_LIP_Y + 3))
+    
+    return lst
 
 def doWaferScan(lst):
     """
