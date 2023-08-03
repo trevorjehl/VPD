@@ -9,14 +9,12 @@ by Trevor Jehl
 from custom_commands import *
 import sys
 
-def main():
+def main(filename):
     """ Main entry point of the app """
-    commands = []
-    args = sys.argv[1:]
-    filename = args[0]
 
     startGCode(commands)
     doWaferScan(commands)
+
     endGCode(commands)
 
     write_to_gcode(commands, filename)
@@ -26,4 +24,7 @@ if __name__ == "__main__":
     """
     This is executed when run from the command line.
     """
-    main()
+    commands = []
+    args = sys.argv[1:]
+    filename = args[0]
+    main(filename)
