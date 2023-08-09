@@ -31,7 +31,7 @@ E_FEEDRATE = 1500 # Adjust as needed
 DISPENSE_FEEDRATE = 1000 # Feedrate for moving the syringe
 DROPLET_SIZE = 1
 TIP_HEIGHT = 3
-TRAVEL_HEIGHT = 40
+TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
 
 CUEVETTE_X = 200
 CUEVETTE_LIP_Y = 25
@@ -46,6 +46,15 @@ EDGE_LENGTH = 5 # How far in from the wafer edge to scan
 #################################
 ########### BEGIN CODE ##########
 #################################
+
+def compensateNozzleOffset(vector):
+    """"
+    Given a point in absolute space (vector),
+    compensate for the syringe tip offset and 
+    return the adjusted new vector.
+    """
+    pass
+
 
 def startGCode(lst):
     """
@@ -64,7 +73,7 @@ def startGCode(lst):
     lst.append(f"M203 E{E_FEEDRATE}")
     #Set XYZ feedrate, move up
     # lst.append(f"M203 X{TRAVEL_FEEDRATE} Y{TRAVEL_FEEDRATE} Z{TRAVEL_FEEDRATE}")
-    lst.append(f"G1 Z2.0; Move up to prevent scrating")
+    lst.append(f"G1 Z2.0; Move up to prevent scratching")
 
     lst.append("; END START GCODE")
 
