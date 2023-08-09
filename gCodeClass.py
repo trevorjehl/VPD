@@ -246,7 +246,6 @@ class CustomGCodeCommands(marlinGCode):
         self.nonExtrudeMove({'Z': 3})
         self.nonExtrudeMove({'X': (X_MAX/2), 'Y': (Y_MAX)/2})
         self.nonExtrudeMove({'Z': 1})
-
         self.commands.append("; END CENTER HEAD")
     
     def doWaferScan(self):
