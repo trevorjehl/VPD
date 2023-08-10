@@ -51,83 +51,109 @@ class marlinGCode:
         self.xOffset = xOffset
         self.yOffset = yOffset
 
-    
-    def adjsutForOffset(self, coords):
-        """"
-        Given a 'coords' dict (ex. {'X': 10.0, 'Y': 5.0}),
-        adjust for the head/tip offset.
-        """
-        if coords is None:
-            return {'X': None, 'Y': None, 'Z': None}
-        
-        for axis, value in coords.items():
-            if axis == "X":
-                coords['X'] = value - self.xOffset
-            if axis == "Y":
-                coords['Y'] = value - self.yOffset
-        
-        return coords
-    
+    def sanitizeCoords(func):
+        def adjsutForOffset(self, coords):
+            """"
+            Given a 'coords' dict (ex. {'X': 10.0, 'Y': 5.0}),
+            adjust for the head/tip offset.
+            """
+            if coords is None:
+                return {'X': None, 'Y': None, 'Z': None}
+            
+            for axis, value in coords.items():
+                if axis == "X":
+                    coords['X'] = value - self.xOffset
+                if axis == "Y":
+                    coords['Y'] = value - self.yOffset
+            
+            return coords
 
-    def addDecimalPoint(self, coords):
-        """
-        GCode can have some funky issues if locations are 
-        given without decimals (ie. G1 X1 instead of G1 X1.).
-        This function checks for compatibility and fixes if/as needed.
-        """
-        
-        result = {}
-        
-        for axis, value in coords.items():
-            if isinstance(value, int):  # if argument is an integer
-                result[axis] = f"{value}.0"
-            elif isinstance(value, float) or isinstance(value, str):  # if argument is a float or string
-                str_val = str(value)
-                if "." not in str_val:  # if float but doesn't have a decimal point (e.g., 5.0)
+        def addDecimalPoint(self, coords):
+            """
+            GCode can have some funky issues if locations are 
+            given without decimals (ie. G1 X1 instead of G1 X1.).
+            This function checks for compatibility and fixes if/as needed.
+            """
+            
+            result = {}
+            
+            for axis, value in coords.items():
+                if isinstance(value, int):  # if argument is an integer
                     result[axis] = f"{value}.0"
+                elif isinstance(value, float) or isinstance(value, str):  # if argument is a float or string
+                    str_val = str(value)
+                    if "." not in str_val:  # if float but doesn't have a decimal point (e.g., 5.0)
+                        result[axis] = f"{value}.0"
+                    else:
+                        result[axis] = str_val
                 else:
-                    result[axis] = str_val
-            else:
-                raise Exception ("Attempted to add decimal point to an incompatible data class.")
+                    raise Exception ("Attempted to add decimal point to an incompatible data class.")
+            
+            return result
+
+
+        def limitDecimalPlaces(self, coords, places = 4):
+            """
+            Limit the decimal places allowed in commands.
+            >>> print = GCodeGenerator("test")
+            >>> print.limitDecimalPlaces({"X": 5.00010})
+            {'X': '5.0001'}
+            >>> print.limitDecimalPlaces({"X": 5.00010, 'Y': 100.1, 'Z': '10.00000'})
+            {'X': '5.0001', 'Y': '100.1000', 'Z': '10.0000'}
+            >>> print.limitDecimalPlaces({"X": "5.00010"})
+            {'X': '5.0001'}
+            """
+            for axis, value in coords.items():
+                value = float(value)
+                coords[axis] = f"{value:.4f}"
+            return coords
+
+
+        def wrapper(instance, *args, **kwargs):
+            """
+            Given coords dict, adjust for offset,
+            add decimals, and return the coordinates
+            as strings.
+            """
+            coords_arg = kwargs.get('coords', None)
+            print(args)
+            args_list = list(args)
+
+            if not coords_arg:
+                for i, arg in enumerate(args):
+                    if isinstance(arg, dict) and any(key in ['X', 'Y', 'Z'] for key in arg):
+                        coords_arg = arg
+                        args = args[:i] + args[i+1:]  # Remove the coords from args
+                        break
+            if not coords_arg:
+                raise ValueError("coords argument not found!")
+            
+            print(coords_arg)
+            
+            coords_arg = adjsutForOffset(instance, coords_arg)
+            coords_arg = addDecimalPoint(instance, coords_arg)
+            coords_arg = limitDecimalPlaces(instance, coords_arg)
+
+
+            print(f"args: {args}")
+            print(f"kwargs: {kwargs}")
+            print(f"sanitized_coords: {coords_arg}")
+
+            args_list[i] = coords_arg  # Insert the modified coords_arg back into its original position
+            args_tuple = tuple(args_list)  # Convert list back to tuple
+
+            print(args_tuple)
+            return func(instance, *args_tuple, **kwargs)
         
-        return result
+        return wrapper
 
 
-    def limitDecimalPlaces(self, coords, places = 4):
-        """
-        Limit the decimal places allowed in commands.
-        >>> print = GCodeGenerator("test")
-        >>> print.limitDecimalPlaces({"X": 5.00010})
-        {'X': '5.0001'}
-        >>> print.limitDecimalPlaces({"X": 5.00010, 'Y': 100.1, 'Z': '10.00000'})
-        {'X': '5.0001', 'Y': '100.1000', 'Z': '10.0000'}
-        >>> print.limitDecimalPlaces({"X": "5.00010"})
-        {'X': '5.0001'}
-        """
-        for axis, value in coords.items():
-            value = float(value)
-            coords[axis] = f"{value:.4f}"
-        return coords
-
-
-    def sanitizeCoords(self, coords):
-        """
-        Given coords dict, adjust for offset,
-        add decimals, and return the coordinates
-        as strings.
-        """
-        print(coords)
-        coords = self.adjsutForOffset(coords)
-        coords = self.addDecimalPoint(coords)
-        coords = self.limitDecimalPlaces(coords)
-        return coords
-
-
+    @sanitizeCoords
     def nonExtrudeMove(self, coords, feedrate = TRAVEL_FEEDRATE):
         """
         Move the extruder without extruding.
         """
-        coords = self.sanitizeCoords(coords)
+        # coords = self.sanitizeCoords(coords)
 
         move = 'G0'
 
@@ -138,7 +164,7 @@ class marlinGCode:
         if move != 'G0':
             self.commands.append(move.strip())
     
-
+    @sanitizeCoords
     def doCircle(self, coords):
         """
         Moves the printehead in a complete circle around the point
@@ -147,7 +173,7 @@ class marlinGCode:
         >>> doCircle([], {'X': 20, 'Y': 20})
         ['G2 I20.0000 J20.0000']
         """
-        coords = self.sanitizeCoords(coords)
+        # coords = self.sanitizeCoords(coords)
         if len(coords) >=3:
             raise Exception ("Passed 3 or more coordinates to the doCircle funciton.")
 
@@ -174,18 +200,20 @@ class marlinGCode:
         self.commands.append(move.strip())
 
 
-    def relativePos(self, lst):
-        lst.append("G91 ; Set all axes to relative")
-        return lst
+    def relativePos(self):
+        self.commands.append("G91 ; Set all axes to relative")
 
 
-    def absPos(self, lst):
-        lst.append("G90 ; Set all axes to absolute")
-        return lst
+    def absPos(self):
+        self.commands.append("G90 ; Set all axes to absolute")
 
 
     def writeToFile(self):
-        with open(self.filename, 'w') as file:
+        filename = self.filename
+        if ".gcode" not in filename:
+            filename += ".gcode"
+
+        with open(filename, 'w') as file:
             for command in self.commands:
                 file.write(f"{command}\n")
 
