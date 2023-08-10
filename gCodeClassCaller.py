@@ -16,8 +16,8 @@ def main(filename):
     scanner.startGCode()
     scanner.doWaferScan()
 
+    
     scanner.endGCode()
-
     scanner.writeToFile()
 
 

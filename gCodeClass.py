@@ -140,9 +140,9 @@ class marlinGCode:
         
         return wrapper
 
-
+    
     @sanitizeCoords
-    def nonExtrudeMove(self, coords, feedrate = TRAVEL_FEEDRATE):
+    def nonExtrudeMove(self, coords, comment = None):
         """
         Move the extruder without extruding.
         """
@@ -152,13 +152,15 @@ class marlinGCode:
 
         for axis, value in coords.items():
             move += f' {axis}{value}'
-        move += f" F{feedrate}"
         
         if move != 'G0':
+            if comment:
+                move += f" ;{comment}"
             self.commands.append(move.strip())
     
+    
     @sanitizeCoords
-    def doCircle(self, coords):
+    def doCircle(self, coords, comment = None):
         """
         Moves the printehead in a complete circle around the point
         specified by the coords dictionary. The values in the dictionary
@@ -176,14 +178,16 @@ class marlinGCode:
             if axis == "X":
                 move += f' I{value}'
             if axis == "Y":
-                move += f' I{value}'
+                move += f' J{value}'
         
         if move != "G2":
+            if comment:
+                move += f" ; {comment}"
             self.commands.append(move.strip())
 
 
     @sanitizeCoords
-    def extrudeMove(self, coords):
+    def extrudeMove(self, coords, comment = None):
         """
         >>> extrudeInPlace({'E': 5)
         ['G1 E5.0']
@@ -201,12 +205,12 @@ class marlinGCode:
             move += f" E{coords['E']}"
 
         if move != "G1":
+            if comment: move += f" ; {comment}"
             self.commands.append(move.strip()) 
 
 
     def relativePos(self):
         self.commands.append("G91 ; Set all axes to relative")
-
 
     def absPos(self):
         self.commands.append("G90 ; Set all axes to absolute")
@@ -274,11 +278,9 @@ class CustomGCodeCommands(marlinGCode):
         self.nonExtrudeMove({'X': CUEVETTE_X, 'Y':(CUEVETTE_LIP_Y + 3)})
         
     def centerHead(self):
-        self.commands.append("; BEGIN CENTER HEAD")
-        self.nonExtrudeMove({'Z': 3})
+        self.nonExtrudeMove({'Z': 3}, "BEGIN CENTER HEAD")
         self.nonExtrudeMove({'X': (X_MAX/2), 'Y': (Y_MAX)/2})
-        self.nonExtrudeMove({'Z': 1})
-        self.commands.append("; END CENTER HEAD")
+        self.nonExtrudeMove({'Z': 1}, "END CENTER HEAD")
     
     def doWaferScan(self):
         """
@@ -286,22 +288,20 @@ class CustomGCodeCommands(marlinGCode):
         Moves the head to the start of the rotation, and scans 
         the wafer in concentric circles.
         """
-        rotation_count = 0 
+        
         max_radius = (WAFER_DIAM/2) - EDGE_LENGTH
         max_rotations = math.floor(max_radius/ DROPLET_SIZE)
 
         self.centerHead() # Keep pos in absolute
         self.nonExtrudeMove({'Z': TIP_HEIGHT})
 
+        rotation_count = 0 
         while rotation_count < max_rotations:
             current_offset = max_radius - (rotation_count * DROPLET_SIZE) 
 
-            # Move the head in a bit.
-            self.commands.append(";Move the head in.")
-            self.nonExtrudeMove({'X': (X_MAX/2) + current_offset}, E_FEEDRATE)
+            self.nonExtrudeMove({'X': (X_MAX/2) + current_offset, 'F': E_FEEDRATE}, "Move needle in.")
 
             xRel, yRel = self.calcRelPos((X_MAX/2) + current_offset, Y_MAX/2, (X_MAX/2), (Y_MAX / 2))
-
             self.doCircle({'X': xRel, 'Y': yRel})
 
             rotation_count += 1
@@ -311,7 +311,7 @@ class CustomGCodeCommands(marlinGCode):
         """
         End G-Code raizes the Z axis and presents the wafer.
         """
-        self.commands.append("G91 ;Relative positioning")
-        self.commands.append("G1 Z10 ; Raise Z")
-        self.commands.append("G90 ;Absolute positioning")
-        self.commands.append(f"G1 X0 Y{Y_MAX} ;Present print")
+        self.relativePos()
+        self.nonExtrudeMove({'Z': 10}, "Raize Z.")
+        self.absPos()
+        self.nonExtrudeMove({'X': 0, 'Y': Y_MAX}, "Present print.")
