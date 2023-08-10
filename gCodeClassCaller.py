@@ -11,10 +11,13 @@ import sys
 
 def main(filename):
     """ Main entry point of the app """
-    scanner = CustomGCodeCommands(filename)
+    scanner = VPDScanner(filename)
 
     scanner.startGCode()
+
+    scanner.useCuevette(False)
     scanner.doWaferScan()
+    scanner.useCuevette(True)
 
     
     scanner.endGCode()

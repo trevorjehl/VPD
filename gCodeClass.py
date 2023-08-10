@@ -22,6 +22,7 @@ DISPENSE_FEEDRATE = 1000 # Feedrate for moving the syringe
 DROPLET_SIZE = 1
 TIP_HEIGHT = 3
 TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
+SAMPLE_VOLUME = 1 # in
 
 CUEVETTE_X = 200
 CUEVETTE_LIP_Y = 25
@@ -39,7 +40,7 @@ EDGE_LENGTH = 5 # How far in from the wafer edge to scan
 
 import math
 
-class marlinGCode:
+class marlinPrinter:
 
     def __init__(self, filename, xOffset = 0, yOffset = 0):
         """
@@ -158,7 +159,7 @@ class marlinGCode:
                 move += f" ;{comment}"
             self.commands.append(move.strip())
     
-    
+
     @sanitizeCoords
     def doCircle(self, coords, comment = None):
         """
@@ -214,9 +215,15 @@ class marlinGCode:
 
     def absPos(self):
         self.commands.append("G90 ; Set all axes to absolute")
-
+    
+    def homeAxes(self):
+        self.commands.append("G28 ; Home all axes")
 
     def writeToFile(self):
+        """"
+        To be called at the end of the routine. Writes all
+        commands line by line to a .gcode file.
+        """
         filename = self.filename
         if ".gcode" not in filename:
             filename += ".gcode"
@@ -231,7 +238,7 @@ class marlinGCode:
 #################################
 
 
-class CustomGCodeCommands(marlinGCode):
+class VPDScanner(marlinPrinter):
     def __init__(self, filename):
         super().__init__(filename)
     
@@ -244,15 +251,17 @@ class CustomGCodeCommands(marlinGCode):
         self.commands.append("M82 ;absolute extrusion mode")
         self.commands.append("M302 S0; always allow extrusion (disable checking)")
         self.commands.append("G92 E0 ; Reset Extruder")
-        self.commands.append("G28 ; Home all axes")
-        self.commands.append("G90; Absolute positioning")
+
+        self.homeAxes()
+        self.absPos()
         self.commands.append("G92 E0 X0 Y0 Z0; Set home position")
         #Set extruder feedrate
         self.commands.append(f"M203 E{E_FEEDRATE}")
         #Set XYZ feedrate, move up
-        self.commands.append(f"G1 Z2.0; Move up to prevent scratching")
+        self.nonExtrudeMove({'Z': 2.0}, "Move up to prevent scratching.")
 
         self.commands.append("; END START GCODE")
+
 
     def calcRelPos(self, xAbs, yAbs, xPoint, yPoint):
         """
@@ -261,9 +270,32 @@ class CustomGCodeCommands(marlinGCode):
         XY vector to travel from the abs to the point.
         """
         return (xPoint - xAbs, yPoint - yAbs)  
-    
-    def depositSample(self):
+
+
+    def collectSample(self, volume):
+        """"
+        Assume needle tip is in location where ready to 
+        collect, collect the volume.
         """
+        self.extrudeMove({'E': -volume/2, 'F': DISPENSE_FEEDRATE})
+        self.extrudeMove({'E': volume/2, 'F': DISPENSE_FEEDRATE})
+        self.extrudeMove({'E': -volume, 'F': DISPENSE_FEEDRATE})
+
+
+    def dispenseSample(self, volume):
+        """"
+        Assume needle tip is in location where ready to 
+        dispense, dispense the volume.
+        """
+        self.extrudeMove({'E': volume, 'F': DISPENSE_FEEDRATE})
+        self.extrudeMove({'E': -volume/2, 'F': DISPENSE_FEEDRATE})
+        self.extrudeMove({'E': volume/2, 'F': DISPENSE_FEEDRATE})
+
+
+    def useCuevette(self, dispense: bool):
+        """
+        If dispense is true, will dispense sample. Otherwise 
+        will collect sample.
         Using the cuevette measurements (found in
         global variables), move up, move over, move down,
         and deposit the scanned droplet.
@@ -271,12 +303,17 @@ class CustomGCodeCommands(marlinGCode):
         # move up
         self.nonExtrudeMove({'Z': TRAVEL_HEIGHT})
         #move over cuevette
-        self.nonExtrudeMove({'X': CUEVETTE_X, 'Y': (CUEVETTE_LIP_Y + 3)})
+        self.nonExtrudeMove({'X': CUEVETTE_X, 'Y': CUEVETTE_LIP_Y })
         #Go in to the cuevette
         self.nonExtrudeMove({'Z': CUEVETTE_BOTTOM_HEIGHT})
+        if dispense:
+            self.dispenseSample(SAMPLE_VOLUME)
+        else:
+            self.collectSample(SAMPLE_VOLUME)
         # Go back up
-        self.nonExtrudeMove({'X': CUEVETTE_X, 'Y':(CUEVETTE_LIP_Y + 3)})
+        self.nonExtrudeMove({'Z': TRAVEL_HEIGHT})
         
+
     def centerHead(self):
         self.nonExtrudeMove({'Z': 3}, "BEGIN CENTER HEAD")
         self.nonExtrudeMove({'X': (X_MAX/2), 'Y': (Y_MAX)/2})
