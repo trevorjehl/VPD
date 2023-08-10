@@ -150,6 +150,7 @@ G2 I-2.8000 I0.0000
 ;Move the head in.
 G0 X111.8000 F1500
 G2 I-1.8000 I0.0000
+G1 E5.0000
 G91 ;Relative positioning
 G1 Z10 ; Raise Z
 G90 ;Absolute positioning

@@ -11,13 +11,14 @@ import sys
 
 def main(filename):
     """ Main entry point of the app """
-    code = CustomGCodeCommands(filename)
-    code.startGCode()
-    code.doWaferScan()
+    scanner = CustomGCodeCommands(filename)
 
-    code.endGCode()
+    scanner.startGCode()
+    scanner.doWaferScan()
 
-    code.writeToFile()
+    scanner.endGCode()
+
+    scanner.writeToFile()
 
 
 if __name__ == "__main__":

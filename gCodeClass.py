@@ -50,24 +50,8 @@ class marlinGCode:
         self.filename = filename
         self.xOffset = xOffset
         self.yOffset = yOffset
-
+    
     def sanitizeCoords(func):
-        def adjsutForOffset(self, coords):
-            """"
-            Given a 'coords' dict (ex. {'X': 10.0, 'Y': 5.0}),
-            adjust for the head/tip offset.
-            """
-            if coords is None:
-                return {'X': None, 'Y': None, 'Z': None}
-            
-            for axis, value in coords.items():
-                if axis == "X":
-                    coords['X'] = value - self.xOffset
-                if axis == "Y":
-                    coords['Y'] = value - self.yOffset
-            
-            return coords
-
         def addDecimalPoint(self, coords):
             """
             GCode can have some funky issues if locations are 
@@ -90,6 +74,22 @@ class marlinGCode:
                     raise Exception ("Attempted to add decimal point to an incompatible data class.")
             
             return result
+    
+        def adjsutForOffset(self, coords):
+            """"
+            Given a 'coords' dict (ex. {'X': 10.0, 'Y': 5.0}),
+            adjust for the head/tip offset.
+            """
+            if coords is None:
+                return {'X': None, 'Y': None, 'Z': None}
+            
+            for axis, value in coords.items():
+                if axis == "X":
+                    coords['X'] = value - self.xOffset
+                if axis == "Y":
+                    coords['Y'] = value - self.yOffset
+            
+            return coords
 
 
         def limitDecimalPlaces(self, coords, places = 4):
@@ -121,23 +121,16 @@ class marlinGCode:
 
             if not coords_arg:
                 for i, arg in enumerate(args):
-                    if isinstance(arg, dict) and any(key in ['X', 'Y', 'Z'] for key in arg):
+                    if isinstance(arg, dict) and any(key in ['X', 'Y', 'Z', 'E'] for key in arg):
                         coords_arg = arg
                         args = args[:i] + args[i+1:]  # Remove the coords from args
                         break
             if not coords_arg:
                 raise ValueError("coords argument not found!")
             
-            print(coords_arg)
-            
             coords_arg = adjsutForOffset(instance, coords_arg)
             coords_arg = addDecimalPoint(instance, coords_arg)
             coords_arg = limitDecimalPlaces(instance, coords_arg)
-
-
-            print(f"args: {args}")
-            print(f"kwargs: {kwargs}")
-            print(f"sanitized_coords: {coords_arg}")
 
             args_list[i] = coords_arg  # Insert the modified coords_arg back into its original position
             args_tuple = tuple(args_list)  # Convert list back to tuple
@@ -189,15 +182,26 @@ class marlinGCode:
             self.commands.append(move.strip())
 
 
-    def extrudeInPlace(self, amount):
+    @sanitizeCoords
+    def extrudeMove(self, coords):
         """
-        >>> extrudeInPlace([], 5)
+        >>> extrudeInPlace({'E': 5)
         ['G1 E5.0']
         """
-        amount = self.addDecimalPoint(amount)
+        coord_axes = coords.keys()
+        move = "G1"
 
-        move = f"G1 E{amount}"
-        self.commands.append(move.strip())
+        if "X" in coord_axes:
+            move += (f" X{coords['X']}")
+        if "Y" in coord_axes:
+            move += f" Y{coords['Y']}"
+        if "Z" in coord_axes:
+            move += f" Z{coords['Z']}"
+        if "E" in coord_axes:
+            move += f" E{coords['E']}"
+
+        if move != "G1":
+            self.commands.append(move.strip()) 
 
 
     def relativePos(self):
