@@ -268,7 +268,6 @@ class CustomGCodeCommands(marlinGCode):
             self.commands.append(";Move the head in.")
             self.nonExtrudeMove({'X': (X_MAX/2) + current_offset}, E_FEEDRATE)
 
-            # GCodeCircle(lst, ((X_MAX/2) + current_offset), Y_MAX/2, (X_MAX/2), (Y_MAX / 2))
             xRel, yRel = self.calcRelPos((X_MAX/2) + current_offset, Y_MAX/2, (X_MAX/2), (Y_MAX / 2))
 
             self.doCircle({'X': xRel, 'Y': yRel})
