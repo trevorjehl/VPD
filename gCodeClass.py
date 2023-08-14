@@ -18,8 +18,8 @@ Z_MAX = 250
 # PROCESS VALUES (in mm unless otherwuise noted)
 TRAVEL_FEEDRATE = 5000 # Standard is 1125
 E_FEEDRATE = 1500 # Adjust as needed
-DISPENSE_FEEDRATE = 1000 # Feedrate for moving the syringe
-DROPLET_SIZE = 1
+DISPENSE_FEEDRATE = 30 # Feedrate for moving the syringe
+DROPLET_SIZE = 10
 TIP_HEIGHT = 3
 TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
 SAMPLE_VOLUME = 1 # in
@@ -42,16 +42,20 @@ import math
 
 class marlinPrinter:
 
-    def __init__(self, filename, xOffset = 0, yOffset = 0):
+    def __init__(self, filename, xOffset = 0, yOffset = 0, zOffset = 0):
         """
         Creates the internal command list,
         captures filename
         """
-        self.commands = []
         self.filename = filename
+
         self.xOffset = xOffset
         self.yOffset = yOffset
-    
+        self.zOffset = zOffset
+
+        self.commands = [] # Create list of G-Code commands
+        
+        
     def sanitizeCoords(func):
         def addDecimalPoint(self, coords):
             """
@@ -89,6 +93,8 @@ class marlinPrinter:
                     coords['X'] = value - self.xOffset
                 if axis == "Y":
                     coords['Y'] = value - self.yOffset
+                if axis == 'Z':
+                    coords['Z'] = value + self.zOffset
             
             return coords
 
@@ -153,6 +159,8 @@ class marlinPrinter:
 
         for axis, value in coords.items():
             move += f' {axis}{value}'
+        if 'F' not in move:
+            move+= f' F{TRAVEL_FEEDRATE}'
         
         if move != 'G0':
             if comment:
@@ -204,9 +212,29 @@ class marlinPrinter:
             move += f" Z{coords['Z']}"
         if "E" in coord_axes:
             move += f" E{coords['E']}"
+        if 'F' in coord_axes:
+            move += f" F{coords['F']}"
 
         if move != "G1":
             if comment: move += f" ; {comment}"
+            self.commands.append(move.strip()) 
+    
+    @sanitizeCoords
+    def setStepsPerUnit(self, coords):
+        coord_axes = coords.keys()
+        move = "M92"
+
+        if "X" in coord_axes:
+            move += (f" X{coords['X']}")
+        if "Y" in coord_axes:
+            move += f" Y{coords['Y']}"
+        if "Z" in coord_axes:
+            move += f" Z{coords['Z']}"
+        if "E" in coord_axes:
+            move += f" E{coords['E']}"
+
+        if move != "M92":
+            move += " ; Set steps per unit."
             self.commands.append(move.strip()) 
 
 
@@ -241,6 +269,33 @@ class marlinPrinter:
 class VPDScanner(marlinPrinter):
     def __init__(self, filename):
         super().__init__(filename)
+
+
+    def getEFeedRate(self, mL, mm):
+        """
+        Assuming the motor has 3200 steps/rev, 
+        calculate the feed rate such that the command 
+        'E1' dispenses exactly 1ml of solution.
+        """
+        stepsPerRotation = 3200
+        stepsPerDeg = stepsPerRotation / 360
+        
+        gearTeeth = 30
+        gearPitchDia = 15 #mm
+        gearPitchCircum = 2 * (gearPitchDia/2) * math.pi()
+        gearTeethPerDegree = gearTeeth /  360
+
+        
+        rackTeethPerCm = 7
+
+        mLPerMM = mL / mm
+        mLPerRackTooth = mLPerMM * (10 / rackTeethPerCm)
+        mLPerGearDegree = mLPerRackTooth * gearTeethPerDegree
+
+        degreePerML = 1/mLPerGearDegree
+
+        stepsPerML = degreePerML * stepsPerDeg
+
     
     def startGCode(self):
         """
@@ -255,10 +310,14 @@ class VPDScanner(marlinPrinter):
         self.homeAxes()
         self.absPos()
         self.commands.append("G92 E0 X0 Y0 Z0; Set home position")
-        #Set extruder feedrate
-        self.commands.append(f"M203 E{E_FEEDRATE}")
-        #Set XYZ feedrate, move up
-        self.nonExtrudeMove({'Z': 2.0}, "Move up to prevent scratching.")
+        
+        self.commands.append(f"M203 E{E_FEEDRATE}") #Set extruder feedrate
+        
+        # Set appropriate e_steps
+        e_steps = self.getEFeedRate(0.25, 25)
+        self.setStepsPerUnit({'E': e_steps})
+        
+        self.nonExtrudeMove({'Z': 2.0}, "Move up to prevent scratching.") #Set XYZ feedrate, move up
 
         self.commands.append("; END START GCODE")
 
