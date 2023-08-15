@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
+
 All relevant native GCODE commands to be 
 called by python.
 
 Created Jul 2023
 by Trevor Jehl
+
 """
 #################################
 ### CUSTOMIZE VARIABLES BELOW ###
@@ -22,6 +24,7 @@ Z_MAX = 250
 import math
 
 class marlinPrinter:
+    reverseEDir = True
 
     def __init__(self, filename, xOffset = 0, yOffset = 0, zOffset = 0):
         """
@@ -190,16 +193,21 @@ class marlinPrinter:
         if "Z" in coord_axes:
             move += f" Z{coords['Z']}"
         if "E" in coord_axes:
-            if float(coords['E']) >= 0:
-                move += f" E-{coords['E']}"
-            elif '-' in coords['E']:
-                move += f" E{coords['E'][1:]}"
+            if marlinPrinter.reverseEDir:
+                if float(coords['E']) >= 0:
+                    move += f" E-{coords['E']}"
+                elif '-' in coords['E']:
+                    move += f" E{coords['E'][1:]}"
+            
+            else:
+                move += f" E{coords['E']}"
         if 'F' in coord_axes:
             move += f" F{coords['F']}"
 
         if move != "G1":
             if comment: move += f" ; {comment}"
             self.commands.append(move.strip()) 
+    
     
     @sanitizeCoords
     def setStepsPerUnit(self, coords):
@@ -255,13 +263,13 @@ class VPDScanner(marlinPrinter):
     DISPENSE_FEEDRATE = 15 # Feedrate for moving the syringe
     TIP_HEIGHT = 3
     TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
-    SAMPLE_VOLUME = 1 # in
+    SAMPLE_VOLUME = 1 # in mL
+
+    DROPLET_SIZE = 10 #mm
 
     CUEVETTE_X = 200
     CUEVETTE_LIP_Y = 25
     CUEVETTE_BOTTOM_HEIGHT = 10
-
-    # DEPRECIATED MAX_PATH_LENGTH = 1 # How long (in mm) should the head linearly travel?
 
     # Wafer specific global vars (in mm unless otherwuise noted)
     WAFER_DIAM = 101.6 # 4in wafer
@@ -374,7 +382,7 @@ class VPDScanner(marlinPrinter):
         else:
             self.collectSample(VPDScanner.SAMPLE_VOLUME)
         # Go back up
-        self.nonExtrudeMove({'Z': TRAVEL_HEIGHT})
+        self.nonExtrudeMove({'Z': VPDScanner.TRAVEL_HEIGHT})
         
 
     def centerHead(self):
@@ -399,7 +407,7 @@ class VPDScanner(marlinPrinter):
         while rotation_count < max_rotations:
             current_offset = max_radius - (rotation_count * VPDScanner.DROPLET_SIZE) 
 
-            self.nonExtrudeMove({'X': (X_MAX/2) + current_offset, 'F': VPDScanner.VPDScanner}, "Move needle in.")
+            self.nonExtrudeMove({'X': (X_MAX/2) + current_offset, 'F': VPDScanner.E_FEEDRATE}, "Move needle in.")
 
             xRel, yRel = self.calcRelPos((X_MAX/2) + current_offset, Y_MAX/2, (X_MAX/2), (Y_MAX / 2))
             self.doCircle({'X': xRel, 'Y': yRel})
