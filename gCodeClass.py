@@ -25,6 +25,9 @@ import math
 
 class marlinPrinter:
     reverseEDir = True
+    X_MAX = 220
+    Y_MAX = 220
+    Z_MAX = 250
 
     def __init__(self, filename, xOffset = 0, yOffset = 0, zOffset = 0):
         """
@@ -208,7 +211,7 @@ class marlinPrinter:
             if comment: move += f" ; {comment}"
             self.commands.append(move.strip()) 
     
-    
+
     @sanitizeCoords
     def setStepsPerUnit(self, coords):
         coord_axes = coords.keys()
@@ -387,7 +390,7 @@ class VPDScanner(marlinPrinter):
 
     def centerHead(self):
         self.nonExtrudeMove({'Z': 3}, "BEGIN CENTER HEAD")
-        self.nonExtrudeMove({'X': (X_MAX/2), 'Y': (Y_MAX)/2})
+        self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2), 'Y': (marlinPrinter.Y_MAX)/2})
         self.nonExtrudeMove({'Z': 1}, "END CENTER HEAD")
     
     def doWaferScan(self):
@@ -407,9 +410,9 @@ class VPDScanner(marlinPrinter):
         while rotation_count < max_rotations:
             current_offset = max_radius - (rotation_count * VPDScanner.DROPLET_SIZE) 
 
-            self.nonExtrudeMove({'X': (X_MAX/2) + current_offset, 'F': VPDScanner.E_FEEDRATE}, "Move needle in.")
+            self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2) + current_offset, 'F': VPDScanner.E_FEEDRATE}, "Move needle in.")
 
-            xRel, yRel = self.calcRelPos((X_MAX/2) + current_offset, Y_MAX/2, (X_MAX/2), (Y_MAX / 2))
+            xRel, yRel = self.calcRelPos((marlinPrinter.X_MAX/2) + current_offset, marlinPrinter.Y_MAX/2, (marlinPrinter.X_MAX/2), (marlinPrinter.Y_MAX / 2))
             self.doCircle({'X': xRel, 'Y': yRel})
 
             rotation_count += 1
