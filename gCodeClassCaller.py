@@ -12,12 +12,13 @@ import sys
 def main(filename):
     """ Main entry point of the app """
     scanner = VPDScanner(filename)
+    print(scanner.getEFeedRate)
 
     scanner.startGCode()
 
-    scanner.useCuevette(False)
+    scanner.useCuevette(dispense = False)
     scanner.doWaferScan()
-    scanner.useCuevette(True)
+    scanner.useCuevette(dispense = True)
 
     
     scanner.endGCode()

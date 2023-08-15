@@ -15,25 +15,6 @@ X_MAX = 220
 Y_MAX = 220
 Z_MAX = 250
 
-# PROCESS VALUES (in mm unless otherwuise noted)
-TRAVEL_FEEDRATE = 5000 # Standard is 1125
-E_FEEDRATE = 1500 # Adjust as needed
-DISPENSE_FEEDRATE = 30 # Feedrate for moving the syringe
-DROPLET_SIZE = 10
-TIP_HEIGHT = 3
-TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
-SAMPLE_VOLUME = 1 # in
-
-CUEVETTE_X = 200
-CUEVETTE_LIP_Y = 25
-CUEVETTE_BOTTOM_HEIGHT = 10
-
-# DEPRECIATED MAX_PATH_LENGTH = 1 # How long (in mm) should the head linearly travel?
-
-# Wafer specific global vars (in mm unless otherwuise noted)
-WAFER_DIAM = 101.6 # 4in wafer
-EDGE_LENGTH = 5 # How far in from the wafer edge to scan
-
 ###########################
 ###########################
 ###########################
@@ -123,7 +104,6 @@ class marlinPrinter:
             as strings.
             """
             coords_arg = kwargs.get('coords', None)
-            print(args)
             args_list = list(args)
 
             if not coords_arg:
@@ -142,7 +122,6 @@ class marlinPrinter:
             args_list[i] = coords_arg  # Insert the modified coords_arg back into its original position
             args_tuple = tuple(args_list)  # Convert list back to tuple
 
-            print(args_tuple)
             return func(instance, *args_tuple, **kwargs)
         
         return wrapper
@@ -160,7 +139,7 @@ class marlinPrinter:
         for axis, value in coords.items():
             move += f' {axis}{value}'
         if 'F' not in move:
-            move+= f' F{TRAVEL_FEEDRATE}'
+            move+= f' F{VPDScanner.TRAVEL_FEEDRATE}'
         
         if move != 'G0':
             if comment:
@@ -211,7 +190,10 @@ class marlinPrinter:
         if "Z" in coord_axes:
             move += f" Z{coords['Z']}"
         if "E" in coord_axes:
-            move += f" E{coords['E']}"
+            if float(coords['E']) >= 0:
+                move += f" E-{coords['E']}"
+            elif '-' in coords['E']:
+                move += f" E{coords['E'][1:]}"
         if 'F' in coord_axes:
             move += f" F{coords['F']}"
 
@@ -267,34 +249,56 @@ class marlinPrinter:
 
 
 class VPDScanner(marlinPrinter):
-    def __init__(self, filename):
+    # PROCESS VALUES (in mm unless otherwuise noted)
+    TRAVEL_FEEDRATE = 5000 # Standard is 1125
+    E_FEEDRATE = 1500 # Adjust as needed
+    DISPENSE_FEEDRATE = 15 # Feedrate for moving the syringe
+    TIP_HEIGHT = 3
+    TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
+    SAMPLE_VOLUME = 1 # in
+
+    CUEVETTE_X = 200
+    CUEVETTE_LIP_Y = 25
+    CUEVETTE_BOTTOM_HEIGHT = 10
+
+    # DEPRECIATED MAX_PATH_LENGTH = 1 # How long (in mm) should the head linearly travel?
+
+    # Wafer specific global vars (in mm unless otherwuise noted)
+    WAFER_DIAM = 101.6 # 4in wafer
+    EDGE_GAP = 5 # How far in from the wafer edge to scan
+
+    def __init__(self, filename, mL = 0.500, mm = 60):
         super().__init__(filename)
+        self.mL = mL
+        self.mm = mm
 
-
-    def getEFeedRate(self, mL, mm):
+    def getEFeedRate(self):
         """
         Assuming the motor has 3200 steps/rev, 
         calculate the feed rate such that the command 
         'E1' dispenses exactly 1ml of solution.
         """
+        mL = self.mL
+        mm = self.mm
+
         stepsPerRotation = 3200
         stepsPerDeg = stepsPerRotation / 360
         
         gearTeeth = 30
-        gearPitchDia = 15 #mm
-        gearPitchCircum = 2 * (gearPitchDia/2) * math.pi()
         gearTeethPerDegree = gearTeeth /  360
 
         
-        rackTeethPerCm = 7
+        rackTeethPerCm = 6.36619
 
         mLPerMM = mL / mm
-        mLPerRackTooth = mLPerMM * (10 / rackTeethPerCm)
+        mLPerRackTooth = (mLPerMM * 10) / rackTeethPerCm
         mLPerGearDegree = mLPerRackTooth * gearTeethPerDegree
 
         degreePerML = 1/mLPerGearDegree
 
         stepsPerML = degreePerML * stepsPerDeg
+
+        return stepsPerML
 
     
     def startGCode(self):
@@ -311,10 +315,10 @@ class VPDScanner(marlinPrinter):
         self.absPos()
         self.commands.append("G92 E0 X0 Y0 Z0; Set home position")
         
-        self.commands.append(f"M203 E{E_FEEDRATE}") #Set extruder feedrate
+        self.commands.append(f"M203 E{VPDScanner.E_FEEDRATE}") #Set extruder feedrate
         
         # Set appropriate e_steps
-        e_steps = self.getEFeedRate(0.25, 25)
+        e_steps = self.getEFeedRate()
         self.setStepsPerUnit({'E': e_steps})
         
         self.nonExtrudeMove({'Z': 2.0}, "Move up to prevent scratching.") #Set XYZ feedrate, move up
@@ -336,9 +340,9 @@ class VPDScanner(marlinPrinter):
         Assume needle tip is in location where ready to 
         collect, collect the volume.
         """
-        self.extrudeMove({'E': -volume/2, 'F': DISPENSE_FEEDRATE})
-        self.extrudeMove({'E': volume/2, 'F': DISPENSE_FEEDRATE})
-        self.extrudeMove({'E': -volume, 'F': DISPENSE_FEEDRATE})
+        self.extrudeMove({'E': -volume/2, 'F': VPDScanner.DISPENSE_FEEDRATE})
+        self.extrudeMove({'E': volume/2, 'F': VPDScanner.DISPENSE_FEEDRATE})
+        self.extrudeMove({'E': -volume, 'F': VPDScanner.DISPENSE_FEEDRATE})
 
 
     def dispenseSample(self, volume):
@@ -346,9 +350,9 @@ class VPDScanner(marlinPrinter):
         Assume needle tip is in location where ready to 
         dispense, dispense the volume.
         """
-        self.extrudeMove({'E': volume, 'F': DISPENSE_FEEDRATE})
-        self.extrudeMove({'E': -volume/2, 'F': DISPENSE_FEEDRATE})
-        self.extrudeMove({'E': volume/2, 'F': DISPENSE_FEEDRATE})
+        self.extrudeMove({'E': volume, 'F': VPDScanner.DISPENSE_FEEDRATE})
+        self.extrudeMove({'E': -volume/2, 'F': VPDScanner.DISPENSE_FEEDRATE})
+        self.extrudeMove({'E': volume/2, 'F': VPDScanner.DISPENSE_FEEDRATE})
 
 
     def useCuevette(self, dispense: bool):
@@ -360,15 +364,15 @@ class VPDScanner(marlinPrinter):
         and deposit the scanned droplet.
         """
         # move up
-        self.nonExtrudeMove({'Z': TRAVEL_HEIGHT})
+        self.nonExtrudeMove({'Z': VPDScanner.TRAVEL_HEIGHT})
         #move over cuevette
-        self.nonExtrudeMove({'X': CUEVETTE_X, 'Y': CUEVETTE_LIP_Y })
+        self.nonExtrudeMove({'X': VPDScanner.CUEVETTE_X, 'Y': VPDScanner.CUEVETTE_LIP_Y })
         #Go in to the cuevette
-        self.nonExtrudeMove({'Z': CUEVETTE_BOTTOM_HEIGHT})
+        self.nonExtrudeMove({'Z': VPDScanner.CUEVETTE_BOTTOM_HEIGHT})
         if dispense:
-            self.dispenseSample(SAMPLE_VOLUME)
+            self.dispenseSample(VPDScanner.SAMPLE_VOLUME)
         else:
-            self.collectSample(SAMPLE_VOLUME)
+            self.collectSample(VPDScanner.SAMPLE_VOLUME)
         # Go back up
         self.nonExtrudeMove({'Z': TRAVEL_HEIGHT})
         
@@ -385,17 +389,17 @@ class VPDScanner(marlinPrinter):
         the wafer in concentric circles.
         """
         
-        max_radius = (WAFER_DIAM/2) - EDGE_LENGTH
-        max_rotations = math.floor(max_radius/ DROPLET_SIZE)
+        max_radius = (VPDScanner.WAFER_DIAM/2) - VPDScanner.EDGE_GAP
+        max_rotations = math.floor(max_radius/ VPDScanner.DROPLET_SIZE)
 
         self.centerHead() # Keep pos in absolute
-        self.nonExtrudeMove({'Z': TIP_HEIGHT})
+        self.nonExtrudeMove({'Z': VPDScanner.TIP_HEIGHT})
 
         rotation_count = 0 
         while rotation_count < max_rotations:
-            current_offset = max_radius - (rotation_count * DROPLET_SIZE) 
+            current_offset = max_radius - (rotation_count * VPDScanner.DROPLET_SIZE) 
 
-            self.nonExtrudeMove({'X': (X_MAX/2) + current_offset, 'F': E_FEEDRATE}, "Move needle in.")
+            self.nonExtrudeMove({'X': (X_MAX/2) + current_offset, 'F': VPDScanner.VPDScanner}, "Move needle in.")
 
             xRel, yRel = self.calcRelPos((X_MAX/2) + current_offset, Y_MAX/2, (X_MAX/2), (Y_MAX / 2))
             self.doCircle({'X': xRel, 'Y': yRel})
