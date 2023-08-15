@@ -8,19 +8,6 @@ Created Jul 2023
 by Trevor Jehl
 
 """
-#################################
-### CUSTOMIZE VARIABLES BELOW ###
-#################################
-
-#ENDER 3 CONSTRAINTS
-X_MAX = 220
-Y_MAX = 220
-Z_MAX = 250
-
-###########################
-###########################
-###########################
-
 import math
 
 class marlinPrinter:
@@ -261,18 +248,17 @@ class marlinPrinter:
 
 class VPDScanner(marlinPrinter):
     # PROCESS VALUES (in mm unless otherwuise noted)
-    TRAVEL_FEEDRATE = 5000 # Standard is 1125
-    E_FEEDRATE = 1500 # Adjust as needed
-    DISPENSE_FEEDRATE = 15 # Feedrate for moving the syringe
+    TRAVEL_FEEDRATE = 4000 # Standard is 3000
+    SCANNING_MOVE_FEEDRATE = 1000 # Adjust as needed
+    EXTRUSION_MOTOR_FEEDRATE = 10
+
     TIP_HEIGHT = 3
     TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
-    SAMPLE_VOLUME = 1 # in mL
-
     DROPLET_SIZE = 10 #mm
 
     CUEVETTE_X = 200
     CUEVETTE_LIP_Y = 25
-    CUEVETTE_BOTTOM_HEIGHT = 10
+    CUEVETTE_Z = 10
 
     # Wafer specific global vars (in mm unless otherwuise noted)
     WAFER_DIAM = 101.6 # 4in wafer
@@ -326,8 +312,6 @@ class VPDScanner(marlinPrinter):
         self.absPos()
         self.commands.append("G92 E0 X0 Y0 Z0; Set home position")
         
-        self.commands.append(f"M203 E{VPDScanner.E_FEEDRATE}") #Set extruder feedrate
-        
         # Set appropriate e_steps
         e_steps = self.getEFeedRate()
         self.setStepsPerUnit({'E': e_steps})
@@ -351,9 +335,9 @@ class VPDScanner(marlinPrinter):
         Assume needle tip is in location where ready to 
         collect, collect the volume.
         """
-        self.extrudeMove({'E': -volume/2, 'F': VPDScanner.DISPENSE_FEEDRATE})
-        self.extrudeMove({'E': volume/2, 'F': VPDScanner.DISPENSE_FEEDRATE})
-        self.extrudeMove({'E': -volume, 'F': VPDScanner.DISPENSE_FEEDRATE})
+        self.extrudeMove({'E': -volume/2, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': volume/2, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': -volume, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
 
 
     def dispenseSample(self, volume):
@@ -361,9 +345,9 @@ class VPDScanner(marlinPrinter):
         Assume needle tip is in location where ready to 
         dispense, dispense the volume.
         """
-        self.extrudeMove({'E': volume, 'F': VPDScanner.DISPENSE_FEEDRATE})
-        self.extrudeMove({'E': -volume/2, 'F': VPDScanner.DISPENSE_FEEDRATE})
-        self.extrudeMove({'E': volume/2, 'F': VPDScanner.DISPENSE_FEEDRATE})
+        self.extrudeMove({'E': volume, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': -volume/2, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': volume/2, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
 
 
     def useCuevette(self, dispense: bool):
@@ -379,11 +363,11 @@ class VPDScanner(marlinPrinter):
         #move over cuevette
         self.nonExtrudeMove({'X': VPDScanner.CUEVETTE_X, 'Y': VPDScanner.CUEVETTE_LIP_Y })
         #Go in to the cuevette
-        self.nonExtrudeMove({'Z': VPDScanner.CUEVETTE_BOTTOM_HEIGHT})
+        self.nonExtrudeMove({'Z': VPDScanner.CUEVETTE_Z})
         if dispense:
-            self.dispenseSample(VPDScanner.SAMPLE_VOLUME)
+            self.dispenseSample(self.mL)
         else:
-            self.collectSample(VPDScanner.SAMPLE_VOLUME)
+            self.collectSample(self.mL)
         # Go back up
         self.nonExtrudeMove({'Z': VPDScanner.TRAVEL_HEIGHT})
         
@@ -407,15 +391,20 @@ class VPDScanner(marlinPrinter):
         self.nonExtrudeMove({'Z': VPDScanner.TIP_HEIGHT})
 
         rotation_count = 0 
+
+        self.extrudeMove({'E': self.mL, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+
         while rotation_count < max_rotations:
             current_offset = max_radius - (rotation_count * VPDScanner.DROPLET_SIZE) 
 
-            self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2) + current_offset, 'F': VPDScanner.E_FEEDRATE}, "Move needle in.")
+            self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2) + current_offset, 'F': VPDScanner.SCANNING_MOVE_FEEDRATE}, "Move needle in.")
 
             xRel, yRel = self.calcRelPos((marlinPrinter.X_MAX/2) + current_offset, marlinPrinter.Y_MAX/2, (marlinPrinter.X_MAX/2), (marlinPrinter.Y_MAX / 2))
             self.doCircle({'X': xRel, 'Y': yRel})
 
             rotation_count += 1
+        
+        self.extrudeMove({'E': -1 * float(self.mL), 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
     
 
     def endGCode(self):
@@ -425,4 +414,4 @@ class VPDScanner(marlinPrinter):
         self.relativePos()
         self.nonExtrudeMove({'Z': 10}, "Raize Z.")
         self.absPos()
-        self.nonExtrudeMove({'X': 0, 'Y': Y_MAX}, "Present print.")
+        self.nonExtrudeMove({'X': 0, 'Y': marlinPrinter.Y_MAX}, "Present print.")
