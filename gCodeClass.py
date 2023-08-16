@@ -12,11 +12,11 @@ import math
 
 class marlinPrinter:
     reverseEDir = True
-    X_MAX = 220
-    Y_MAX = 220
+    X_MAX = 235
+    Y_MAX = 235
     Z_MAX = 250
 
-    def __init__(self, filename, xOffset = 0, yOffset = 0, zOffset = 0):
+    def __init__(self, filename, xOffset = -8.3, yOffset = 17.02, zOffset = 0):
         """
         Creates the internal command list,
         captures filename
@@ -64,9 +64,9 @@ class marlinPrinter:
             
             for axis, value in coords.items():
                 if axis == "X":
-                    coords['X'] = value - self.xOffset
+                    coords['X'] = value + self.xOffset
                 if axis == "Y":
-                    coords['Y'] = value - self.yOffset
+                    coords['Y'] = value + self.yOffset
                 if axis == 'Z':
                     coords['Z'] = value + self.zOffset
             
@@ -173,6 +173,9 @@ class marlinPrinter:
         >>> extrudeInPlace({'E': 5)
         ['G1 E5.0']
         """
+        # self.commands.append('M83; Set E to relative positioning')
+        self.commands.append('M82; Set E to absolute positioning')
+
         coord_axes = coords.keys()
         move = "G1"
 
@@ -183,14 +186,7 @@ class marlinPrinter:
         if "Z" in coord_axes:
             move += f" Z{coords['Z']}"
         if "E" in coord_axes:
-            if marlinPrinter.reverseEDir:
-                if float(coords['E']) >= 0:
-                    move += f" E-{coords['E']}"
-                elif '-' in coords['E']:
-                    move += f" E{coords['E'][1:]}"
-            
-            else:
-                move += f" E{coords['E']}"
+            move += f" E{coords['E']}"
         if 'F' in coord_axes:
             move += f" F{coords['F']}"
 
@@ -242,7 +238,11 @@ class marlinPrinter:
 
 
 #################################
+#################################
+#################################
 ##### BEGIN CUSTOM COMMANDS #####
+#################################
+#################################
 #################################
 
 
@@ -254,10 +254,10 @@ class VPDScanner(marlinPrinter):
 
     TIP_HEIGHT = 3
     TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
-    DROPLET_SIZE = 10 #mm
+    DROPLET_SIZE = 3 #mm
 
     CUEVETTE_X = 200
-    CUEVETTE_LIP_Y = 25
+    CUEVETTE_Y = 25
     CUEVETTE_Z = 10
 
     # Wafer specific global vars (in mm unless otherwuise noted)
@@ -335,9 +335,9 @@ class VPDScanner(marlinPrinter):
         Assume needle tip is in location where ready to 
         collect, collect the volume.
         """
-        self.extrudeMove({'E': -volume/2, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
         self.extrudeMove({'E': volume/2, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
-        self.extrudeMove({'E': -volume, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': volume, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
 
 
     def dispenseSample(self, volume):
@@ -345,9 +345,9 @@ class VPDScanner(marlinPrinter):
         Assume needle tip is in location where ready to 
         dispense, dispense the volume.
         """
-        self.extrudeMove({'E': volume, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
-        self.extrudeMove({'E': -volume/2, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
         self.extrudeMove({'E': volume/2, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
 
 
     def useCuevette(self, dispense: bool):
@@ -361,7 +361,7 @@ class VPDScanner(marlinPrinter):
         # move up
         self.nonExtrudeMove({'Z': VPDScanner.TRAVEL_HEIGHT})
         #move over cuevette
-        self.nonExtrudeMove({'X': VPDScanner.CUEVETTE_X, 'Y': VPDScanner.CUEVETTE_LIP_Y })
+        self.nonExtrudeMove({'X': VPDScanner.CUEVETTE_X, 'Y': VPDScanner.CUEVETTE_Y })
         #Go in to the cuevette
         self.nonExtrudeMove({'Z': VPDScanner.CUEVETTE_Z})
         if dispense:
@@ -373,10 +373,10 @@ class VPDScanner(marlinPrinter):
         
 
     def centerHead(self):
-        self.nonExtrudeMove({'Z': 3}, "BEGIN CENTER HEAD")
-        self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2), 'Y': (marlinPrinter.Y_MAX)/2})
-        self.nonExtrudeMove({'Z': 1}, "END CENTER HEAD")
+        self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2), 'Y': (marlinPrinter.Y_MAX)/2}, "BEGIN CENTER HEAD")
+        self.nonExtrudeMove({'Z': 3})
     
+
     def doWaferScan(self):
         """
         Centers the head over the wafer, moves tip back up.
@@ -388,11 +388,11 @@ class VPDScanner(marlinPrinter):
         max_rotations = math.floor(max_radius/ VPDScanner.DROPLET_SIZE)
 
         self.centerHead() # Keep pos in absolute
-        self.nonExtrudeMove({'Z': VPDScanner.TIP_HEIGHT})
+        # self.nonExtrudeMove({'Z': VPDScanner.TIP_HEIGHT})
 
         rotation_count = 0 
 
-        self.extrudeMove({'E': self.mL, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
 
         while rotation_count < max_rotations:
             current_offset = max_radius - (rotation_count * VPDScanner.DROPLET_SIZE) 
@@ -404,7 +404,7 @@ class VPDScanner(marlinPrinter):
 
             rotation_count += 1
         
-        self.extrudeMove({'E': -1 * float(self.mL), 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': self.mL, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
     
 
     def endGCode(self):

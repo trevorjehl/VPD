@@ -24,28 +24,27 @@ def changeDefaultParams(classInstance):
     # marlinPrinter.Y_MAX = 220
     # marlinPrinter.Z_MAX = 250
 
-    # # PROCESS VALUES (in mm unless otherwuise noted)
-    # VPDScanner.TRAVEL_FEEDRATE = 5000 # Standard is 1125
-    # VPDScanner.E_FEEDRATE = 1500 # Adjust as needed
-    # VPDScanner.DISPENSE_FEEDRATE = 15 # Feedrate for moving the syringe
-    # VPDScanner.TIP_HEIGHT = 3
-    # VPDScanner.TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
-    # VPDScanner.SAMPLE_VOLUME = 1 # in mL
+#    # PROCESS VALUES (in mm unless otherwuise noted)
+    VPDScanner.TRAVEL_FEEDRATE = 2000 # Standard is 3000
+    VPDScanner.SCANNING_MOVE_FEEDRATE = 1500 # Adjust as needed to maintain hold of drop
+    VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 5
 
-    # VPDScanner.DROPLET_SIZE = 10 #mm
+#     VPDScanner.TIP_HEIGHT = 3
+#     VPDScanner.TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
+    VPDScanner.DROPLET_SIZE = 10 #mm
 
-    # VPDScanner.CUEVETTE_X = 200
-    # VPDScanner.CUEVETTE_LIP_Y = 25
-    # VPDScanner.CUEVETTE_BOTTOM_HEIGHT = 10
+#     VPDScanner.CUEVETTE_X = 200
+#     VPDScanner.CUEVETTE_Y = 25
+#     VPDScanner.CUEVETTE_Z = 10
 
-    # # Wafer specific global vars (in mm unless otherwuise noted)
-    # VPDScanner.WAFER_DIAM = 101.6 # 4in wafer
-    # VPDScanner.EDGE_GAP = 5 # How far in from the wafer edge to scan
+#     # Wafer specific global vars (in mm unless otherwuise noted)
+#     VPDScanner.WAFER_DIAM = 101.6 # 4in wafer
+#     VPDScanner.EDGE_GAP = 5 # How far in from the wafer edge to scan
 
 
 def main(filename):
     """ Main entry point of the app """
-    scanner = VPDScanner(filename)
+    scanner = VPDScanner(filename, mL = 0.5, mm = 60)
     changeDefaultParams(scanner)
 
     scanner.startGCode()
