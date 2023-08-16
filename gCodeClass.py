@@ -6,7 +6,7 @@ called by python.
 
 Created Jul 2023
 by Trevor Jehl
-
+Stanford Nanofabrication Facility 2023
 """
 import math
 
@@ -130,7 +130,7 @@ class marlinPrinter:
     @sanitizeCoords
     def nonExtrudeMove(self, coords, comment = None):
         """
-        Move the extruder without extruding.
+        Move the extruder without extruding. E units are in mL.
         """
         # coords = self.sanitizeCoords(coords)
 
@@ -161,7 +161,6 @@ class marlinPrinter:
             raise Exception ("Passed 3 or more coordinates to the doCircle funciton.")
 
         move = "G2"
-
         for axis, value in coords.items():
             if axis == "X":
                 move += f' I{value}'
@@ -177,6 +176,9 @@ class marlinPrinter:
     @sanitizeCoords
     def extrudeMove(self, coords, comment = None):
         """
+        Move any set of X,Y,Z,E axes. E axis is ALWAYS 
+        absolute positioning. E units are in mL. Specify
+        'F' in the coords dict to determine the feedrate.
         >>> extrudeInPlace({'E': 5)
         ['G1 E5.0']
         """
@@ -190,17 +192,6 @@ class marlinPrinter:
             move += f' {axis}{value}'
         if 'F' not in move:
             move+= f' F{VPDScanner.TRAVEL_FEEDRATE}'
-
-        # if "X" in coord_axes:
-        #     move += (f" X{coords['X']}")
-        # if "Y" in coord_axes:
-        #     move += f" Y{coords['Y']}"
-        # if "Z" in coord_axes:
-        #     move += f" Z{coords['Z']}"
-        # if "E" in coord_axes:
-        #     move += f" E{coords['E']}"
-        # if 'F' in coord_axes:
-        #     move += f" F{coords['F']}"
 
         if move != "G1":
             if comment: move += f" ; {comment}"
@@ -228,6 +219,9 @@ class marlinPrinter:
     
     def homeAxes(self):
         self.commands.append("G28 ; Home all axes")
+    
+    def waitForUserInput(self):
+        self.commands.append("M0 ; Stop and wait")
 
     def writeToFile(self):
         """"
@@ -244,13 +238,11 @@ class marlinPrinter:
                 file.write(f"{command}\n")
 
 
-#################################
-#################################
-#################################
-##### BEGIN CUSTOM COMMANDS #####
-#################################
-#################################
-#################################
+#####################################################
+#####################################################
+############### BEGIN CUSTOM COMMANDS ###############
+#####################################################
+#####################################################
 
 
 class VPDScanner(marlinPrinter):
@@ -270,6 +262,9 @@ class VPDScanner(marlinPrinter):
     # Wafer specific global vars (in mm unless otherwuise noted)
     WAFER_DIAM = 101.6 # 4in wafer
     EDGE_GAP = 5 # How far in from the wafer edge to scan
+
+    RACK_TEETH_PER_CM = 6.36619
+    GEAR_TEETH = 30
 
     def __init__(self, filename, mL = 0.500, mm = 60):
         """"
@@ -294,11 +289,10 @@ class VPDScanner(marlinPrinter):
         stepsPerRotation = 3200
         stepsPerDeg = stepsPerRotation / 360
         
-        gearTeeth = 30
+        gearTeeth = VPDScanner.GEAR_TEETH
         gearTeethPerDegree = gearTeeth /  360
-
         
-        rackTeethPerCm = 6.36619
+        rackTeethPerCm = VPDScanner.RACK_TEETH_PER_CM
 
         mLPerMM = mL / mm
         mLPerRackTooth = (mLPerMM * 10) / rackTeethPerCm
@@ -318,7 +312,7 @@ class VPDScanner(marlinPrinter):
         self.commands.append("; BEGIN START GCODE")
         self.commands.append("G21 ; set units to millimeters")
         self.commands.append("M82 ;absolute extrusion mode")
-        self.commands.append("M302 S0; always allow extrusion (disable checking)")
+        self.commands.append("M302 S0; always allow extrusion (disable temp/length checking)")
         self.commands.append("G92 E0 ; Reset Extruder")
 
         self.homeAxes()

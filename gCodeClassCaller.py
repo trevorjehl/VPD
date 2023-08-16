@@ -51,7 +51,6 @@ def main(filename):
     scanner.useCuevette(dispense = False)
     scanner.doWaferScan()
     scanner.useCuevette(dispense = True)
-
     
     scanner.endGCode()
     scanner.writeToFile()
