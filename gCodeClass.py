@@ -18,8 +18,8 @@ class marlinPrinter:
 
     def __init__(self, filename, xOffset = -8.3, yOffset = 17.02, zOffset = 0):
         """
-        Creates the internal command list,
-        captures filename
+        Creates the internal command list, captures the gcode filename to write to,
+        defines the nozzle offset for the printer.
         """
         self.filename = filename
 
@@ -47,17 +47,18 @@ class marlinPrinter:
                     str_val = str(value)
                     if "." not in str_val:  # if float but doesn't have a decimal point (e.g., 5.0)
                         result[axis] = f"{value}.0"
-                    else:
+                    else: # if the number is already formatted correctly
                         result[axis] = str_val
                 else:
                     raise Exception ("Attempted to add decimal point to an incompatible data class.")
             
             return result
     
+
         def adjsutForOffset(self, coords):
             """"
             Given a 'coords' dict (ex. {'X': 10.0, 'Y': 5.0}),
-            adjust for the head/tip offset.
+            adjust for the head/tip/nozzle offset.
             """
             if coords is None:
                 return {'X': None, 'Y': None, 'Z': None}
@@ -96,16 +97,22 @@ class marlinPrinter:
             add decimals, and return the coordinates
             as strings.
             """
+            # retrive anything called 'coords' from a function's input
             coords_arg = kwargs.get('coords', None)
+            # get all the arguments passed into a function
             args_list = list(args)
 
+            # If no 'coords' arg found, then 
             if not coords_arg:
+                # Iterate through each argument to check for a dictionary containing position related keys
                 for i, arg in enumerate(args):
-                    if isinstance(arg, dict) and any(key in ['X', 'Y', 'Z', 'E'] for key in arg):
+                    if isinstance(arg, dict) and any(key in ['X', 'Y', 'Z', 'E', 'F'] for key in arg):
                         coords_arg = arg
+                        # Remove the found coordinates dictionary from the arguments list
                         args = args[:i] + args[i+1:]  # Remove the coords from args
-                        break
-            if not coords_arg:
+                        break # stop looking
+            
+            if not coords_arg: # Raise an error if 'coords' argument is still not found after the checks
                 raise ValueError("coords argument not found!")
             
             coords_arg = adjsutForOffset(instance, coords_arg)
@@ -113,7 +120,7 @@ class marlinPrinter:
             coords_arg = limitDecimalPlaces(instance, coords_arg)
 
             args_list[i] = coords_arg  # Insert the modified coords_arg back into its original position
-            args_tuple = tuple(args_list)  # Convert list back to tuple
+            args_tuple = tuple(args_list)  # Convert list back to tuple (it is initially a tuple)
 
             return func(instance, *args_tuple, **kwargs)
         
@@ -127,7 +134,7 @@ class marlinPrinter:
         """
         # coords = self.sanitizeCoords(coords)
 
-        move = 'G0'
+        move = 'G0' # base command
 
         for axis, value in coords.items():
             move += f' {axis}{value}'
@@ -179,16 +186,21 @@ class marlinPrinter:
         coord_axes = coords.keys()
         move = "G1"
 
-        if "X" in coord_axes:
-            move += (f" X{coords['X']}")
-        if "Y" in coord_axes:
-            move += f" Y{coords['Y']}"
-        if "Z" in coord_axes:
-            move += f" Z{coords['Z']}"
-        if "E" in coord_axes:
-            move += f" E{coords['E']}"
-        if 'F' in coord_axes:
-            move += f" F{coords['F']}"
+        for axis, value in coords.items():
+            move += f' {axis}{value}'
+        if 'F' not in move:
+            move+= f' F{VPDScanner.TRAVEL_FEEDRATE}'
+
+        # if "X" in coord_axes:
+        #     move += (f" X{coords['X']}")
+        # if "Y" in coord_axes:
+        #     move += f" Y{coords['Y']}"
+        # if "Z" in coord_axes:
+        #     move += f" Z{coords['Z']}"
+        # if "E" in coord_axes:
+        #     move += f" E{coords['E']}"
+        # if 'F' in coord_axes:
+        #     move += f" F{coords['F']}"
 
         if move != "G1":
             if comment: move += f" ; {comment}"
@@ -200,14 +212,8 @@ class marlinPrinter:
         coord_axes = coords.keys()
         move = "M92"
 
-        if "X" in coord_axes:
-            move += (f" X{coords['X']}")
-        if "Y" in coord_axes:
-            move += f" Y{coords['Y']}"
-        if "Z" in coord_axes:
-            move += f" Z{coords['Z']}"
-        if "E" in coord_axes:
-            move += f" E{coords['E']}"
+        for axis, value in coords.items():
+            move += f' {axis}{value}'
 
         if move != "M92":
             move += " ; Set steps per unit."
@@ -226,7 +232,8 @@ class marlinPrinter:
     def writeToFile(self):
         """"
         To be called at the end of the routine. Writes all
-        commands line by line to a .gcode file.
+        commands line by line to a .gcode file. Filename defined
+        when creating class instance.
         """
         filename = self.filename
         if ".gcode" not in filename:
@@ -252,7 +259,7 @@ class VPDScanner(marlinPrinter):
     SCANNING_MOVE_FEEDRATE = 1000 # Adjust as needed
     EXTRUSION_MOTOR_FEEDRATE = 10
 
-    TIP_HEIGHT = 3
+    SCAN_HEIGHT = 3
     TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
     DROPLET_SIZE = 3 #mm
 
@@ -265,9 +272,15 @@ class VPDScanner(marlinPrinter):
     EDGE_GAP = 5 # How far in from the wafer edge to scan
 
     def __init__(self, filename, mL = 0.500, mm = 60):
+        """"
+        Creates a VPD scanner class object. Filename will write the
+        gcode to that file. mL & mm define the capacity (in mL) and length
+        of the syringe used.
+        """
         super().__init__(filename)
         self.mL = mL
         self.mm = mm
+
 
     def getEFeedRate(self):
         """
@@ -374,7 +387,6 @@ class VPDScanner(marlinPrinter):
 
     def centerHead(self):
         self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2), 'Y': (marlinPrinter.Y_MAX)/2}, "BEGIN CENTER HEAD")
-        self.nonExtrudeMove({'Z': 3})
     
 
     def doWaferScan(self):
@@ -383,27 +395,29 @@ class VPDScanner(marlinPrinter):
         Moves the head to the start of the rotation, and scans 
         the wafer in concentric circles.
         """
-        
+        # Calculate the furthest point out from center (radially)
         max_radius = (VPDScanner.WAFER_DIAM/2) - VPDScanner.EDGE_GAP
-        max_rotations = math.floor(max_radius/ VPDScanner.DROPLET_SIZE)
+        # Divide the radius into smaller arcs to be scanned
+        max_rotations = math.floor(max_radius / VPDScanner.DROPLET_SIZE)
 
-        self.centerHead() # Keep pos in absolute
-        # self.nonExtrudeMove({'Z': VPDScanner.TIP_HEIGHT})
+        self.centerHead()
+        self.nonExtrudeMove({'Z': VPDScanner.SCAN_HEIGHT})
+        self.dispenseSample(self.mL)
 
         rotation_count = 0 
-
-        self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
-
         while rotation_count < max_rotations:
+            # Calculate the current scan radius (from center)
             current_offset = max_radius - (rotation_count * VPDScanner.DROPLET_SIZE) 
 
             self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2) + current_offset, 'F': VPDScanner.SCANNING_MOVE_FEEDRATE}, "Move needle in.")
 
+            # Calculate relative location & move the head in a circle around the wafer center
             xRel, yRel = self.calcRelPos((marlinPrinter.X_MAX/2) + current_offset, marlinPrinter.Y_MAX/2, (marlinPrinter.X_MAX/2), (marlinPrinter.Y_MAX / 2))
             self.doCircle({'X': xRel, 'Y': yRel})
 
             rotation_count += 1
         
+        # Pick the sample back up
         self.extrudeMove({'E': self.mL, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
     
 
@@ -412,6 +426,6 @@ class VPDScanner(marlinPrinter):
         End G-Code raizes the Z axis and presents the wafer.
         """
         self.relativePos()
-        self.nonExtrudeMove({'Z': 10}, "Raize Z.")
+        self.nonExtrudeMove({'Z': 15}, "Raize Z.")
         self.absPos()
         self.nonExtrudeMove({'X': 0, 'Y': marlinPrinter.Y_MAX}, "Present print.")
