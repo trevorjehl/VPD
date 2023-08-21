@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-
 All relevant native GCODE commands to be 
-called by python.
+called by Python.
 
 Created Jul 2023
 by Trevor Jehl
@@ -11,7 +10,6 @@ Stanford Nanofabrication Facility 2023
 import math
 
 class marlinPrinter:
-    reverseEDir = True
     X_MAX = 235
     Y_MAX = 235
     Z_MAX = 250
@@ -22,7 +20,6 @@ class marlinPrinter:
         defines the nozzle offset for the printer.
         """
         self.filename = filename
-
         self.xOffset = xOffset
         self.yOffset = yOffset
         self.zOffset = zOffset
@@ -238,7 +235,6 @@ class marlinPrinter:
         self.waitForMovesToComplete()
         self.commands.append(f'M300 P{(sec*1000):.4f} ; Beep.')
 
-
     def writeToFile(self):
         """"
         To be called at the end of the routine. Writes all
@@ -267,8 +263,8 @@ class VPDScanner(marlinPrinter):
     SCANNING_MOVE_FEEDRATE = 1000 # Adjust as needed
     EXTRUSION_MOTOR_FEEDRATE = 10
 
-    SCAN_HEIGHT = 3
-    TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
+    SCAN_HEIGHT = 3 # How high from the z-stop should the tip be to scan?
+    TRAVEL_HEIGHT = 40 # Make sure this is well above the cuevette lid height
     DROPLET_SIZE = 3 #mm
 
     CUEVETTE_X = 200
@@ -279,23 +275,24 @@ class VPDScanner(marlinPrinter):
     WAFER_DIAM = 101.6 # 4in wafer
     EDGE_GAP = 5 # How far in from the wafer edge to scan
 
+    # Only adjust the paramaters below if the physical gears are modified
     RACK_TEETH_PER_CM = 6.36619
     GEAR_TEETH = 30
 
     SYRINGE_CAPACITY = 0.500
     SYRINGE_LENGTH = 60
 
-    def __init__(self, filename, sample_volume):
+    def __init__(self, filename, sample_volume, **kwargs):
         """"
         Creates a VPD scanner class object. Filename will write the
-        gcode to that file. mL & mm define the capacity (in mL) and length
-        of the syringe used.
+        gcode to that file. Sample_volume defines how much liquid 
+        the system will use during the scan
         """
-        super().__init__(filename)
+        super().__init__(filename, **kwargs)
         self.sample_volume = sample_volume
 
 
-    def getEFeedRate(self):
+    def calcEFeedRate(self):
         """
         Assuming the motor has 3200 steps/rev, 
         calculate the feed rate such that the command 
@@ -303,6 +300,9 @@ class VPDScanner(marlinPrinter):
         """
         mL = VPDScanner.SYRINGE_CAPACITY
         mm = VPDScanner.SYRINGE_LENGTH
+
+        print(f"ml = {mL}")
+        print(f"mm = {mm}")
 
         stepsPerRotation = 3200
         stepsPerDeg = stepsPerRotation / 360
@@ -319,6 +319,8 @@ class VPDScanner(marlinPrinter):
         degreePerML = 1/mLPerGearDegree
 
         stepsPerML = degreePerML * stepsPerDeg
+
+        print(f"stepsPerML = {stepsPerML}")
 
         return stepsPerML
 
@@ -338,7 +340,7 @@ class VPDScanner(marlinPrinter):
         self.commands.append("G92 E0 X0 Y0 Z0; Set home position")
         
         # Set appropriate e_steps
-        e_steps = self.getEFeedRate()
+        e_steps = self.calcEFeedRate()
         self.setStepsPerUnit({'E': e_steps})
         
         self.nonExtrudeMove({'Z': 2.0}, "Move up to prevent scratching.") #Set XYZ feedrate, move up
@@ -355,7 +357,7 @@ class VPDScanner(marlinPrinter):
         return (xPoint - xAbs, yPoint - yAbs)  
 
 
-    def collectSample(self, volume):
+    def collectSample(self, volume = None):
         """"
         Assume needle tip is in location where ready to 
         collect, collect the volume.
@@ -371,7 +373,7 @@ class VPDScanner(marlinPrinter):
         self.wait()
 
 
-    def dispenseSample(self, volume):
+    def dispenseSample(self, volume = None):
         """"
         Assume needle tip is in location where ready to 
         dispense, dispense the volume.
@@ -426,7 +428,7 @@ class VPDScanner(marlinPrinter):
 
         self.centerHead()
         self.nonExtrudeMove({'Z': VPDScanner.SCAN_HEIGHT})
-        self.dispenseSample(self.mL)
+        self.dispenseSample()
 
         rotation_count = 0 
         while rotation_count < max_rotations:
@@ -442,7 +444,7 @@ class VPDScanner(marlinPrinter):
             rotation_count += 1
         
         # Pick the sample back up
-        self.extrudeMove({'E': self.mL, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': self.sample_volume, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
 
 
     def loadSyringe(self):
@@ -451,7 +453,7 @@ class VPDScanner(marlinPrinter):
         that a full syringe may be loaded in.
         """
         self.nonExtrudeMove({'X': 0, 'Y': 0, 'Z': VPDScanner.TRAVEL_HEIGHT})
-        self.extrudeMove({'E': self.mL, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Open syringe holder.')
+        self.extrudeMove({'E': self.sample_volume, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Open syringe holder.')
         self.beep()
         self.waitForUserInput()
 
@@ -461,7 +463,7 @@ class VPDScanner(marlinPrinter):
         that a full syringe may be loaded in.
         """
         self.nonExtrudeMove({'X': 0, 'Y': 0, 'Z': VPDScanner.TRAVEL_HEIGHT})
-        self.extrudeMove({'E': self.mL, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Open syringe holder.')
+        self.extrudeMove({'E': self.sample_volume, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Open syringe holder.')
         self.beep(0.3)
         self.waitForUserInput()
         self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Close syringe holder so it is ready for the next cycle.')
