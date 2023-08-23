@@ -301,8 +301,8 @@ class VPDScanner(marlinPrinter):
         mL = VPDScanner.SYRINGE_CAPACITY
         mm = VPDScanner.SYRINGE_LENGTH
 
-        print(f"ml = {mL}")
-        print(f"mm = {mm}")
+        # print(f"ml = {mL}")
+        # print(f"mm = {mm}")
 
         stepsPerRotation = 3200
         stepsPerDeg = stepsPerRotation / 360
@@ -320,9 +320,20 @@ class VPDScanner(marlinPrinter):
 
         stepsPerML = degreePerML * stepsPerDeg
 
-        print(f"stepsPerML = {stepsPerML}")
+        # print(f"stepsPerML = {stepsPerML}")
 
         return stepsPerML
+    
+    def returnTrueXY(coords):
+        """
+        Some moves must be done in terms of the true XY
+        position without adjusting for the head offset. These moves
+        include the circular scan rotations as well as the cuevette moves.
+        This function subtracts the head offsets to the coords so the effect 
+        is that the true coords are written to the gcode.
+        """
+        pass
+
 
     
     def startGCode(self):
@@ -344,8 +355,9 @@ class VPDScanner(marlinPrinter):
         self.setStepsPerUnit({'E': e_steps})
         
         self.nonExtrudeMove({'Z': 2.0}, "Move up to prevent scratching.") #Set XYZ feedrate, move up
-
+        self.commands.append(";")
         self.commands.append("; END START GCODE")
+        self.commands.append(";")
 
 
     def calcRelPos(self, xAbs, yAbs, xPoint, yPoint):
@@ -400,7 +412,7 @@ class VPDScanner(marlinPrinter):
         # move up
         self.nonExtrudeMove({'Z': VPDScanner.TRAVEL_HEIGHT})
         #move over cuevette
-        self.nonExtrudeMove({'X': VPDScanner.CUEVETTE_X, 'Y': VPDScanner.CUEVETTE_Y })
+        self.nonExtrudeMove({'X': VPDScanner.CUEVETTE_X - self.xOffset , 'Y': VPDScanner.CUEVETTE_Y - self.yOffset})
         #Go in to the cuevette
         self.nonExtrudeMove({'Z': VPDScanner.CUEVETTE_Z})
         if dispense:
@@ -412,7 +424,7 @@ class VPDScanner(marlinPrinter):
         
 
     def centerHead(self):
-        self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2), 'Y': (marlinPrinter.Y_MAX)/2}, "BEGIN CENTER HEAD")
+        self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2), 'Y': (marlinPrinter.Y_MAX)/2}, "CENTER HEAD")
     
 
     def doWaferScan(self):
@@ -463,7 +475,7 @@ class VPDScanner(marlinPrinter):
         that a full syringe may be loaded in.
         """
         self.nonExtrudeMove({'X': 0, 'Y': 0, 'Z': VPDScanner.TRAVEL_HEIGHT})
-        self.extrudeMove({'E': self.sample_volume, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Open syringe holder.')
+        self.extrudeMove({'E': self.SYRINGE_CAPACITY, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Open syringe holder.')
         self.beep(0.3)
         self.waitForUserInput()
         self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Close syringe holder so it is ready for the next cycle.')

@@ -27,7 +27,7 @@ def changeDefaultParams(classInstance):
    # PROCESS VALUES (in mm unless otherwuise noted)
     VPDScanner.TRAVEL_FEEDRATE = 1000 # Standard is 3000
     VPDScanner.SCANNING_MOVE_FEEDRATE = 1000 # Adjust as needed to maintain hold of drop
-    VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 20
+    VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 15
 
     # VPDScanner.TIP_HEIGHT = 3
     # VPDScanner.TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)

@@ -30,12 +30,12 @@ def changeDefaultParams(classInstance):
     VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 5
 
     # VPDScanner.TIP_HEIGHT = 3
-    # VPDScanner.TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
+    VPDScanner.TRAVEL_HEIGHT = 34 # Make sure this is well above the highest point (cuevette lid)
     VPDScanner.DROPLET_SIZE = 25 #mm
 
-    # VPDScanner.CUEVETTE_X = 200
-    # VPDScanner.CUEVETTE_Y = 25
-    # VPDScanner.CUEVETTE_Z = 10
+    VPDScanner.CUEVETTE_X = 190.5
+    VPDScanner.CUEVETTE_Y = 47.5
+    VPDScanner.CUEVETTE_Z = 4
 
     # Wafer specific global vars (in mm unless otherwuise noted)
     # VPDScanner.WAFER_DIAM = 101.6 # 4in wafer
@@ -58,7 +58,7 @@ def main(filename):
     scanner.startGCode()
     scanner.loadSyringe()
     scanner.doWaferScan()
-    scanner.useCuevette(dispense = True)
+    # scanner.useCuevette(dispense = True)
     scanner.unloadSyringe()
 
     scanner.endGCode()
