@@ -25,11 +25,11 @@ def changeDefaultParams(classInstance):
     # marlinPrinter.Z_MAX = 250
 
    # PROCESS VALUES (in mm unless otherwuise noted)
-    VPDScanner.TRAVEL_FEEDRATE = 5000 # Standard is 3000
-    VPDScanner.SCANNING_MOVE_FEEDRATE = 600 # Adjust as needed to maintain hold of drop
-    VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 15
+    VPDScanner.TRAVEL_FEEDRATE = 1000 # Standard is 3000
+    VPDScanner.SCANNING_MOVE_FEEDRATE = 100 # Adjust as needed to maintain hold of drop
+    VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 10
 
-    VPDScanner.SCAN_HEIGHT = 0
+    VPDScanner.SCAN_HEIGHT = 1.5
     # VPDScanner.TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
     VPDScanner.DROPLET_SIZE = 25 #mm
 
@@ -39,26 +39,27 @@ def changeDefaultParams(classInstance):
 
     # Wafer specific global vars (in mm unless otherwuise noted)
     VPDScanner.WAFER_DIAM = 100 # 4in wafer
-    VPDScanner.EDGE_GAP = 7 # How far in from the wafer edge to scan
+    VPDScanner.EDGE_GAP = 13 # How far in from the wafer edge to scan
 
     # VPDScanner.RACK_TEETH_PER_CM = 3.183
     # VPDScanner.GEAR_TEETH = 16
     VPDScanner.RACK_TEETH_PER_CM = 6.36619
     VPDScanner.GEAR_TEETH = 30
 
-    VPDScanner.SYRINGE_CAPACITY = 3.0
-    VPDScanner.SYRINGE_LENGTH = 41.0
+    VPDScanner.SYRINGE_CAPACITY = 1.0
+    VPDScanner.SYRINGE_LENGTH = 58.0
 
 
 def main(filename):
     """ Main entry point of the app """
-    scanner = VPDScanner(filename, xOffset = -7.2, yOffset = 17.02, zOffset = 24.0, sample_volume = 0.1)
+    scanner = VPDScanner(filename, xOffset = -7.5, yOffset = 10.52, zOffset = 0.0, sample_volume= 0.05)
     changeDefaultParams(scanner)
 
     scanner.startGCode()
     scanner.loadSyringe()
     scanner.doWaferScan()
-    scanner.useCuevette(dispense = True)
+    
+    # scanner.useCuevette(dispense = True)
     scanner.unloadSyringe()
 
     scanner.endGCode()

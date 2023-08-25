@@ -123,7 +123,20 @@ class marlinPrinter:
         
         return wrapper
 
-    
+
+    def undoHeadOffset(self, coords):
+        for axis, value in coords.items():
+            value = float(value)
+            if axis == "X":
+                fixedX = value - self.xOffset
+                coords['X'] = f'{fixedX:.4f}'
+            if axis == "Y":
+                fixedY = value - self.yOffset
+                coords['Y'] = f'{fixedY:.4f}'
+
+        return coords
+
+
     @sanitizeCoords
     def nonExtrudeMove(self, coords, comment = None):
         """
@@ -134,8 +147,14 @@ class marlinPrinter:
         move = 'G0' # base command
 
         for axis, value in coords.items():
-            move += f' {axis}{value}'
-        if 'F' not in move:
+            if axis == 'F' and 'Z' in coords.items():
+                move += f' {axis}{value/1.6}'
+            else:
+                move += f' {axis}{value}'
+        
+        if 'F' not in move and 'Z' in move:
+            move+= f' F{VPDScanner.TRAVEL_FEEDRATE / 1.6}'
+        elif 'F' not in move:
             move+= f' F{VPDScanner.TRAVEL_FEEDRATE}'
         
         if move != 'G0':
@@ -157,19 +176,39 @@ class marlinPrinter:
         if len(coords) >=3:
             raise Exception ("Passed 3 or more coordinates to the doCircle funciton.")
 
+        coords = self.undoHeadOffset(coords)
         move = "G2"
         for axis, value in coords.items():
             if axis == "X":
-                fixedX = float(value) - self.xOffset
-                move += f' I{fixedX:.4f}'
+                move += f' I{value}'
+                # fixedX = float(value) - self.xOffset
+                # move += f' I{fixedX:.4f}'
             if axis == "Y":
-                fixedY = float(value) - self.yOffset
-                move += f' J{fixedY:.4f}'
+                # fixedY = float(value) - self.yOffset
+                # move += f' J{fixedY:.4f}'
+                move += f' J{value}'
         
         if move != "G2":
             if comment:
                 move += f" ; {comment}"
             self.commands.append(move.strip())
+
+    @sanitizeCoords
+    def doCCWArc(self, coords, radius, theta_deg, comment = None):
+        """
+        Given coords dict(center of rotation), arc radius, an angle,
+        rotate around the center point theta degrees.
+        """ 
+        x = coords['X']
+        y = coords['Y']
+
+        theta_rad = math.radians(theta_deg)
+
+        x_f = x + radius * math.cos(theta_rad)
+        y_f = y + radius * math.sin(theta_rad)
+
+
+        pass
 
 
     @sanitizeCoords
@@ -377,11 +416,11 @@ class VPDScanner(marlinPrinter):
         if not volume:
             volume = self.sample_volume
         
-        self.extrudeMove({'E': volume/2, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': self.SYRINGE_CAPACITY, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
         self.wait()
-        self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE / 2})
         self.wait()
-        self.extrudeMove({'E': volume, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': self.SYRINGE_CAPACITY, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
         self.wait()
 
 
@@ -395,9 +434,9 @@ class VPDScanner(marlinPrinter):
         
         self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
         self.wait()
-        self.extrudeMove({'E': volume/2, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': volume / 2, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE / 2})
         self.wait()
-        self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE / 2})
         self.wait()
 
 
@@ -445,7 +484,7 @@ class VPDScanner(marlinPrinter):
         rotation_count = 0 
         while rotation_count < max_rotations:
             # Calculate the current scan radius (from center)
-            current_offset = max_radius - (rotation_count * VPDScanner.DROPLET_SIZE) 
+            current_offset = max_radius - (rotation_count * VPDScanner.DROPLET_SIZE)
 
             self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2) + current_offset, 'F': VPDScanner.SCANNING_MOVE_FEEDRATE}, "Move needle in.")
 
@@ -464,7 +503,9 @@ class VPDScanner(marlinPrinter):
         At the start of any given cycle, ready the system so 
         that a full syringe may be loaded in.
         """
-        self.nonExtrudeMove({'X': 0, 'Y': 0, 'Z': VPDScanner.TRAVEL_HEIGHT})
+        self.nonExtrudeMove({'Z': VPDScanner.TRAVEL_HEIGHT})
+        self.nonExtrudeMove({'X': 0, 'Y': 0})
+        self.extrudeMove({'E': self.SYRINGE_CAPACITY, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Open syringe holder.')
         self.extrudeMove({'E': self.sample_volume, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Open syringe holder.')
         self.beep()
         self.waitForUserInput()
@@ -474,7 +515,8 @@ class VPDScanner(marlinPrinter):
         At the start of any given cycle, ready the system so 
         that a full syringe may be loaded in.
         """
-        self.nonExtrudeMove({'X': 0, 'Y': 0, 'Z': VPDScanner.TRAVEL_HEIGHT})
+        self.nonExtrudeMove({'Z': VPDScanner.TRAVEL_HEIGHT})
+        self.nonExtrudeMove({'X': 0, 'Y': 0})
         self.extrudeMove({'E': self.SYRINGE_CAPACITY, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Open syringe holder.')
         self.beep(0.3)
         self.waitForUserInput()
