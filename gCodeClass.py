@@ -28,6 +28,8 @@ import math
 
 
 class marlinPrinter:
+    # Leave class variables at these default values here
+    # If you wish to change them, change them in your caller script
     X_MAX = 235
     Y_MAX = 235
     Z_MAX = 250
@@ -38,14 +40,19 @@ class marlinPrinter:
 
     def __init__(self, filename):
         """
-        Creates the internal command list, captures the gcode filename to write to,
-        defines the nozzle offset for the printer.
+        Creates the internal command list, captures the gcode filename to write to.
         """
         self.filename = filename
 
         self.commands = []  # Create list of G-Code commands
 
     def sanitizeCoords(func):
+        """
+        Takes the coords dict (ex. {'X': 5, 'F': 40.1}), adjusts for the printhead
+        offset, adds decimal places to all coordinates, and limits the decimal places
+        allowed to 4.
+        """
+
         def addDecimalPoint(self, coords):
             """
             GCode can have some funky issues if locations are 
@@ -113,7 +120,8 @@ class marlinPrinter:
             """
             Given coords dict, adjust for offset,
             add decimals, and return the coordinates
-            as strings.
+            as strings. Calls helper functions with
+            these purposes.
             """
             # retrive anything called 'coords' from a function's input
             coords_arg = kwargs.get("coords", None)
@@ -153,6 +161,13 @@ class marlinPrinter:
         return wrapper
 
     def undoHeadOffset(self, coords):
+        """
+        Some functions need to use the true XY values instead
+        of adjusting for the head offset to locate a physical
+        point in space. Some examples include the doCircle function,
+        which needs the center point to be constant in space, and also
+        when using the cuevette holder.
+        """
         for axis, value in coords.items():
             value = float(value)
             if axis == "X":
@@ -167,14 +182,13 @@ class marlinPrinter:
     @sanitizeCoords
     def nonExtrudeMove(self, coords, comment=None):
         """
-        Move the extruder without extruding. E units are in mL.
+        Move the extruder without extruding. 
         """
-        # coords = self.sanitizeCoords(coords)
-
         move = "G0"  # base command
 
         for axis, value in coords.items():
             if axis == "F" and "Z" in coords.items():
+                # Decrease feedrate if changing Z.
                 move += f" {axis}{value/1.6}"
             else:
                 move += f" {axis}{value}"
@@ -186,6 +200,7 @@ class marlinPrinter:
 
         if move != "G0":
             if comment:
+                # Add comment as appropriate for G-code clarity
                 move += f" ;{comment}"
             self.commands.append(move.strip())
 
@@ -198,7 +213,6 @@ class marlinPrinter:
         >>> doCircle([], {'X': 20, 'Y': 20})
         ['G2 I20.0000 J20.0000']
         """
-        # coords = self.sanitizeCoords(coords)
         if len(coords) >= 3:
             raise Exception("Passed 3 or more coordinates to the doCircle funciton.")
 
@@ -207,9 +221,7 @@ class marlinPrinter:
         for axis, value in coords.items():
             if axis == "X":
                 move += f" I{value}"
-
             if axis == "Y":
-
                 move += f" J{value}"
 
         if move != "G2":
@@ -620,7 +632,7 @@ class VPDScanner(marlinPrinter):
         self.relativePos()
         self.nonExtrudeMove({"Z": 15}, "Raize Z.")
         self.absPos()
-        # Using 'commands.append' avoids the adjustments for head offset, which are unnecesary here
+        # Using 'commands.append' here avoids the adjustments for head offset, which are unnecesary here
         self.commands.append(
             f"G0 X0.0000 Y{marlinPrinter.Y_MAX} F{VPDScanner.TRAVEL_FEEDRATE} ;Present print."
         )
