@@ -7,6 +7,7 @@ Created Jul 2023
 by Trevor Jehl
 """
 
+
 def addDecimalPoint(*args):
     """
     GCode can have some funky issues if locations are 
@@ -21,7 +22,9 @@ def addDecimalPoint(*args):
             result.append(f"{arg}.0")
         elif isinstance(arg, float) or isinstance(arg, str):  # if argument is a float
             str_val = str(arg)
-            if "." not in str_val:  # if float but doesn't have a decimal point (e.g., 5.0)
+            if (
+                "." not in str_val
+            ):  # if float but doesn't have a decimal point (e.g., 5.0)
                 result.append(f"{arg}.0")
             else:
                 result.append(str(arg))
@@ -32,7 +35,7 @@ def addDecimalPoint(*args):
     return result[0]
 
 
-def nonExtrudeMove(lst,feedrate, X=None,Y=None,Z=None):
+def nonExtrudeMove(lst, feedrate, X=None, Y=None, Z=None):
     """
     Move the extruder without extruding.
     """
@@ -40,14 +43,21 @@ def nonExtrudeMove(lst,feedrate, X=None,Y=None,Z=None):
     Y = addDecimalPoint(Y)
     Z = addDecimalPoint(Z)
 
-    move = 'G0' + (f' X{X}' if X is not None else '') + (f' Y{Y}' if Y is not None else '') + (f' Z{Z}' if Z is not None else '') + f" F{feedrate}"
-    
-    if move != 'G0':
+    move = (
+        "G0"
+        + (f" X{X}" if X is not None else "")
+        + (f" Y{Y}" if Y is not None else "")
+        + (f" Z{Z}" if Z is not None else "")
+        + f" F{feedrate}"
+    )
+
+    if move != "G0":
         lst.append(move.strip())
-    
+
     return lst
 
-def doCircle(lst, xCenterOffset = None, yCenterOffset = None):
+
+def doCircle(lst, xCenterOffset=None, yCenterOffset=None):
     """
     Moves the printehead in a complete circle around the point
     specified by "xCenterOffset" and "yCenterOffset." Those two
@@ -55,7 +65,7 @@ def doCircle(lst, xCenterOffset = None, yCenterOffset = None):
     >>> doCircle([], 20, 20)
     ['G2 I20 J20']
     """
-    if xCenterOffset!= None and yCenterOffset!= None:
+    if xCenterOffset != None and yCenterOffset != None:
         lst.append(f"G2 I{xCenterOffset:.4f} J{yCenterOffset:.4f}")
 
     elif xCenterOffset or yCenterOffset == None:
@@ -76,7 +86,7 @@ def extrudeInPlace(lst, amount):
     amount = addDecimalPoint(amount)
 
     lst.append(f"G1 E{amount}")
-    return(lst)
+    return lst
 
 
 def relativePos(lst):
@@ -91,4 +101,3 @@ def absPos(lst):
 
 def writeToFile():
     pass
-

@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 Take N lines and repeat them n times, counting the number of repeats in the gcode
@@ -18,18 +17,18 @@ def main(filename, repeats):
         filename += ".gcode"
 
     ogCommandsList = []
-    with open(filename, 'r') as file:
+    with open(filename, "r") as file:
         ogLines = file.readlines()
         print(ogLines)
         for line in ogLines:
             ogCommandsList.append(line.strip())
 
-    with open(filename, 'w') as file:
+    with open(filename, "w") as file:
         for repetition in range(repeats):
             for ogCommand in ogCommandsList:
                 # print(ogCommand)
-                file.write(ogCommand + '\n')
-            file.write(f'; {repetition + 1} repeat \n')
+                file.write(ogCommand + "\n")
+            file.write(f"; {repetition + 1} repeat \n")
 
 
 if __name__ == "__main__":

@@ -6,8 +6,9 @@ Created Aug 2023
 by Trevor Jehl
 """
 
-from OLD.gCodeClass import *
+from gCodeClass import *
 import sys
+
 
 def changeDefaultParams(classInstance):
     """"
@@ -18,28 +19,28 @@ def changeDefaultParams(classInstance):
     ###########################################
     # ALL VALUES IN MM UNLESS OTHERWISE NOTED #
     ###########################################
-    
-    #ENDER 3 CONSTRAINTS
+
+    # ENDER 3 CONSTRAINTS
     # marlinPrinter.X_MAX = 220
     # marlinPrinter.Y_MAX = 220
     # marlinPrinter.Z_MAX = 250
 
-   # PROCESS VALUES (in mm unless otherwuise noted)
-    VPDScanner.TRAVEL_FEEDRATE = 5000 # Standard is 3000
-    VPDScanner.SCANNING_MOVE_FEEDRATE = 600 # Adjust as needed to maintain hold of drop
+    # PROCESS VALUES (in mm unless otherwuise noted)
+    VPDScanner.TRAVEL_FEEDRATE = 5000  # Standard is 3000
+    VPDScanner.SCANNING_MOVE_FEEDRATE = 600  # Adjust as needed to maintain hold of drop
     VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 15
 
     VPDScanner.SCAN_HEIGHT = 0
     # VPDScanner.TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
-    VPDScanner.DROPLET_SIZE = 25 #mm
+    VPDScanner.DROPLET_SIZE = 25  # mm
 
     VPDScanner.CUEVETTE_X = 190.5
     VPDScanner.CUEVETTE_Y = 47.5
     VPDScanner.CUEVETTE_Z = 4
 
     # Wafer specific global vars (in mm unless otherwuise noted)
-    VPDScanner.WAFER_DIAM = 100 # 4in wafer
-    VPDScanner.EDGE_GAP = 7 # How far in from the wafer edge to scan
+    VPDScanner.WAFER_DIAM = 100  # 4in wafer
+    VPDScanner.EDGE_GAP = 7  # How far in from the wafer edge to scan
 
     # VPDScanner.RACK_TEETH_PER_CM = 3.183
     # VPDScanner.GEAR_TEETH = 16
@@ -52,13 +53,15 @@ def changeDefaultParams(classInstance):
 
 def main(filename):
     """ Main entry point of the app """
-    scanner = VPDScanner(filename, xOffset = -7.2, yOffset = 17.02, zOffset = 24.0, sample_volume = 0.1)
+    scanner = VPDScanner(
+        filename, xOffset=-7.2, yOffset=17.02, zOffset=24.0, sample_volume=0.1
+    )
     changeDefaultParams(scanner)
 
     scanner.startGCode()
     scanner.loadSyringe()
     scanner.doWaferScan()
-    scanner.useCuevette(dispense = True)
+    scanner.useCuevette(dispense=True)
     scanner.unloadSyringe()
 
     scanner.endGCode()

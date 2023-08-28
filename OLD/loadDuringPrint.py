@@ -6,8 +6,9 @@ Created Aug 2023
 by Trevor Jehl
 """
 
-from OLD.gCodeClass import *
+from gCodeClass import *
 import sys
+
 
 def changeDefaultParams(classInstance):
     """"
@@ -18,20 +19,24 @@ def changeDefaultParams(classInstance):
     ###########################################
     # ALL VALUES IN MM UNLESS OTHERWISE NOTED #
     ###########################################
-    
-    #ENDER 3 CONSTRAINTS
+
+    # ENDER 3 CONSTRAINTS
     # marlinPrinter.X_MAX = 220
     # marlinPrinter.Y_MAX = 220
     # marlinPrinter.Z_MAX = 250
 
-   # PROCESS VALUES (in mm unless otherwuise noted)
-    VPDScanner.TRAVEL_FEEDRATE = 1000 # Standard is 3000
-    VPDScanner.SCANNING_MOVE_FEEDRATE = 1000 # Adjust as needed to maintain hold of drop
+    # PROCESS VALUES (in mm unless otherwuise noted)
+    VPDScanner.TRAVEL_FEEDRATE = 1000  # Standard is 3000
+    VPDScanner.SCANNING_MOVE_FEEDRATE = (
+        1000  # Adjust as needed to maintain hold of drop
+    )
     VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 5
 
     # VPDScanner.TIP_HEIGHT = 3
-    VPDScanner.TRAVEL_HEIGHT = 34 # Make sure this is well above the highest point (cuevette lid)
-    VPDScanner.DROPLET_SIZE = 25 #mm
+    VPDScanner.TRAVEL_HEIGHT = (
+        34  # Make sure this is well above the highest point (cuevette lid)
+    )
+    VPDScanner.DROPLET_SIZE = 25  # mm
 
     VPDScanner.CUEVETTE_X = 190.5
     VPDScanner.CUEVETTE_Y = 47.5
@@ -52,7 +57,7 @@ def changeDefaultParams(classInstance):
 
 def main(filename):
     """ Main entry point of the app """
-    scanner = VPDScanner(filename, sample_volume= 0.500)
+    scanner = VPDScanner(filename, sample_volume=0.500)
     changeDefaultParams(scanner)
 
     scanner.startGCode()

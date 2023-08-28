@@ -9,6 +9,7 @@ by Trevor Jehl
 from custom_commands import *
 import sys
 
+
 def main(filename):
     """ Main entry point of the app """
 
