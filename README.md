@@ -1,3 +1,6 @@
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![Static Badge](https://img.shields.io/badge/PRs-Welcome-green)
+
 # Low-Cost Open Source Vapor Phase Decomposition Scanner
 
 This purpose of this project is to create a low-cost vapor phase decomposition droplet scanner for use in semiconductor research labs. Although traditional semiconductor manufactureres have access to the large, expensive VPD machines to evaluate silicon wafer contamination, these machines can be innacesible for smaller research facilities.
@@ -11,10 +14,18 @@ To download the project, copy all project files to your hard drive. This can be 
 - This project runs on Python 3.1, so ensure your Python installation is up to date.
 - The only dependency for this project is the `math` module.
 
-## Basic Usage
+## Command Line Usage
+To create a new G-Code file, use the following command line syntax:
+```console
+foo@bar:~$ python3 GCodeCaller.py filename.gcode
+```
+This will create a *.gcode* file in your local directory according to the settings and steps outlined in GCodeCaller.py.
+
+## Modifying The Scan Routine
+Refer to (CUSTOM_SCAN)[CUSTOM_SCAN.md].
 
 ## Credits
-This project was made in collaboration with Uriel Valencia. Overseen by [Alexander Denton](https://profiles.stanford.edu/alexander-denton).
+This project was made in collaboration with Uriel Valencia. Overseen by [Alexander Denton](https://profiles.stanford.edu/alexander-denton), Stanford Nanofabrication Facility.
 
 ## License
 
