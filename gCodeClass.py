@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """
-All relevant native GCODE commands to be 
-called by Python.
+Two Python classes for use in a VPD scanner. The
+'marlinPrinter' class uses python to write native 
+G-Code commands. The 'VPDScanner' class uses the 
+native G-Code commands to create functions relevant
+to VPD droplet scanning.
 
 Created Jul 2023
 by Trevor Jehl
+tjehl@stanford.edu
 Stanford Nanofabrication Facility 2023
 """
+
 import math
 
 class marlinPrinter:
@@ -193,22 +198,32 @@ class marlinPrinter:
                 move += f" ; {comment}"
             self.commands.append(move.strip())
 
+
     @sanitizeCoords
-    def doCCWArc(self, coords, radius, theta_deg, comment = None):
+    def doCCWArc(self, coords, center_offset, radius, theta_deg, comment = None):
         """
         Given coords dict(center of rotation), arc radius, an angle,
         rotate around the center point theta degrees.
         """ 
-        x = coords['X']
-        y = coords['Y']
-
+        move = 'G3'
+        x = float(coords['X'])
+        y = float(coords['Y'])
+        print(f'xAbs: {x} yAbs: {y}')
         theta_rad = math.radians(theta_deg)
 
-        x_f = x + radius * math.cos(theta_rad)
-        y_f = y + radius * math.sin(theta_rad)
+         # Calculate the end point of the arc
+        end_x = ( x + center_offset[0] ) + radius * math.cos(theta_rad)
+        end_y = ( y + center_offset[1] ) + radius * math.sin(theta_rad)
 
-
-        pass
+        if 'E' in coords.keys():
+            val = coords['E']
+            move+= f' E{val}'
+        move += f" I{center_offset[0]:.4f} J{center_offset[1]:.4f} X{end_x:.4f} Y{end_y:.4f}"
+        
+        if move != 'G3':
+            if comment:
+                move += f' ; {comment}'
+            self.commands.append(move.strip())
 
 
     @sanitizeCoords
@@ -217,8 +232,6 @@ class marlinPrinter:
         Move any set of X,Y,Z,E axes. E axis is ALWAYS 
         absolute positioning. E units are in mL. Specify
         'F' in the coords dict to determine the feedrate.
-        >>> extrudeInPlace({'E': 5)
-        ['G1 E5.0']
         """
         # self.commands.append('M83; Set E to relative positioning')
         self.commands.append('M82; Set E to absolute positioning')
@@ -238,6 +251,11 @@ class marlinPrinter:
 
     @sanitizeCoords
     def setStepsPerUnit(self, coords):
+        """
+        Use M92 to set the steps-per-unit for one or more axes. 
+        This setting affects how many steps will be done for each 
+        unit of movement.
+        """
         coord_axes = coords.keys()
         move = "M92"
 
@@ -247,7 +265,6 @@ class marlinPrinter:
         if move != "M92":
             move += " ; Set steps per unit."
             self.commands.append(move.strip()) 
-
 
     def relativePos(self):
         self.commands.append("G91 ; Set all axes to relative")
@@ -304,7 +321,7 @@ class VPDScanner(marlinPrinter):
 
     SCAN_HEIGHT = 3 # How high from the z-stop should the tip be to scan?
     TRAVEL_HEIGHT = 40 # Make sure this is well above the cuevette lid height
-    DROPLET_SIZE = 3 #mm
+    DROPLET_DIAMETER = 3 #mm
 
     CUEVETTE_X = 200
     CUEVETTE_Y = 25
@@ -323,9 +340,11 @@ class VPDScanner(marlinPrinter):
 
     def __init__(self, filename, sample_volume, **kwargs):
         """"
-        Creates a VPD scanner class object. Filename will write the
+        Creates a VPD scanner class object, which is a child of the
+        marlinPrinter class. Filename will write the
         gcode to that file. Sample_volume defines how much liquid 
-        the system will use during the scan
+        the system will use during the scan. Passes other kwargs to 
+        marlinPrinter.
         """
         super().__init__(filename, **kwargs)
         self.sample_volume = sample_volume
@@ -335,7 +354,9 @@ class VPDScanner(marlinPrinter):
         """
         Assuming the motor has 3200 steps/rev, 
         calculate the feed rate such that the command 
-        'E1' dispenses exactly 1ml of solution.
+        'G0 E1.0' dispenses exactly 1ml of solution. In other
+        words, the this function calculates the parameter such that
+        '1' system unit is equal to 1mL in the syringe.
         """
         mL = VPDScanner.SYRINGE_CAPACITY
         mm = VPDScanner.SYRINGE_LENGTH
@@ -362,17 +383,6 @@ class VPDScanner(marlinPrinter):
         # print(f"stepsPerML = {stepsPerML}")
 
         return stepsPerML
-    
-    def returnTrueXY(coords):
-        """
-        Some moves must be done in terms of the true XY
-        position without adjusting for the head offset. These moves
-        include the circular scan rotations as well as the cuevette moves.
-        This function subtracts the head offsets to the coords so the effect 
-        is that the true coords are written to the gcode.
-        """
-        pass
-
 
     
     def startGCode(self):
@@ -392,6 +402,7 @@ class VPDScanner(marlinPrinter):
         # Set appropriate e_steps
         e_steps = self.calcEFeedRate()
         self.setStepsPerUnit({'E': e_steps})
+        self.commands.append(f'M203 E{self.EXTRUSION_MOTOR_FEEDRATE:.4f} ; Set max E feedrate')
         
         self.nonExtrudeMove({'Z': 2.0}, "Move up to prevent scratching.") #Set XYZ feedrate, move up
         self.commands.append(";")
@@ -399,13 +410,15 @@ class VPDScanner(marlinPrinter):
         self.commands.append(";")
 
 
-    def calcRelPos(self, xAbs, yAbs, xPoint, yPoint):
+    def calcRelPos(self, coords, xPoint, yPoint):
         """
-        Given a point in space (xPoint, yPoint) and
+        Given a point in space (coords) and
         the current absolute position, calculate the
         XY vector to travel from the abs to the point.
         """
-        return (xPoint - xAbs, yPoint - yAbs)  
+        x = float(coords['X'])
+        y = float(coords['Y'])
+        return (xPoint - x, yPoint - y)  
 
 
     def collectSample(self, volume = None):
@@ -450,7 +463,7 @@ class VPDScanner(marlinPrinter):
         """
         # move up
         self.nonExtrudeMove({'Z': VPDScanner.TRAVEL_HEIGHT})
-        #move over cuevette
+        # move over cuevette
         self.nonExtrudeMove({'X': VPDScanner.CUEVETTE_X - self.xOffset , 'Y': VPDScanner.CUEVETTE_Y - self.yOffset})
         #Go in to the cuevette
         self.nonExtrudeMove({'Z': VPDScanner.CUEVETTE_Z})
@@ -463,6 +476,11 @@ class VPDScanner(marlinPrinter):
         
 
     def centerHead(self):
+        """"
+        Center the head (XY) over the center of the wafer.
+        This function assumes the xOffset & yOffset have been set correctly
+        such that the syringe tip will be over the XY center of the build area.
+        """
         self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2), 'Y': (marlinPrinter.Y_MAX)/2}, "CENTER HEAD")
     
 
@@ -474,28 +492,30 @@ class VPDScanner(marlinPrinter):
         """
         # Calculate the furthest point out from center (radially)
         max_radius = (VPDScanner.WAFER_DIAM/2) - VPDScanner.EDGE_GAP
-        # Divide the radius into smaller arcs to be scanned
-        max_rotations = math.floor(max_radius / VPDScanner.DROPLET_SIZE)
+        # Divide the radius into smaller arcs to be scanned (thin cylinders radially)
+        max_rotations = math.floor(max_radius / VPDScanner.DROPLET_DIAMETER)
 
         self.centerHead()
         self.nonExtrudeMove({'Z': VPDScanner.SCAN_HEIGHT})
-        self.dispenseSample()
+        self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2) + max_radius, 'F': VPDScanner.TRAVEL_FEEDRATE}, "Move to max radius")
+        self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        # self.dispenseSample()
 
         rotation_count = 0 
         while rotation_count < max_rotations:
             # Calculate the current scan radius (from center)
-            current_offset = max_radius - (rotation_count * VPDScanner.DROPLET_SIZE)
+            current_offset = max_radius - (rotation_count * VPDScanner.DROPLET_DIAMETER)
 
             self.nonExtrudeMove({'X': (marlinPrinter.X_MAX/2) + current_offset, 'F': VPDScanner.SCANNING_MOVE_FEEDRATE}, "Move needle in.")
-
+            
             # Calculate relative location & move the head in a circle around the wafer center
-            xRel, yRel = self.calcRelPos((marlinPrinter.X_MAX/2) + current_offset, marlinPrinter.Y_MAX/2, (marlinPrinter.X_MAX/2), (marlinPrinter.Y_MAX / 2))
+            xRel, yRel = self.calcRelPos({'X': (marlinPrinter.X_MAX/2) + current_offset, 'Y': marlinPrinter.Y_MAX/2}, (marlinPrinter.X_MAX/2), (marlinPrinter.Y_MAX / 2))
             self.doCircle({'X': xRel, 'Y': yRel})
 
             rotation_count += 1
         
-        # Pick the sample back up
-        self.extrudeMove({'E': self.sample_volume, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
+        # Rotate backwards in an arc, picking up the drop
+        self.doCCWArc({'X': (marlinPrinter.X_MAX/2) + current_offset, 'Y': marlinPrinter.Y_MAX/2, 'E': self.SYRINGE_CAPACITY}, (xRel, yRel), current_offset, 60, 'arc')
 
 
     def loadSyringe(self):
@@ -505,10 +525,11 @@ class VPDScanner(marlinPrinter):
         """
         self.nonExtrudeMove({'Z': VPDScanner.TRAVEL_HEIGHT})
         self.nonExtrudeMove({'X': 0, 'Y': 0})
-        self.extrudeMove({'E': self.SYRINGE_CAPACITY, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Open syringe holder.')
+        self.extrudeMove({'E': self.SYRINGE_CAPACITY / 3, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Open syringe holder.')
         self.extrudeMove({'E': self.sample_volume, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Open syringe holder.')
         self.beep()
         self.waitForUserInput()
+
 
     def unloadSyringe(self):
         """
@@ -518,7 +539,7 @@ class VPDScanner(marlinPrinter):
         self.nonExtrudeMove({'Z': VPDScanner.TRAVEL_HEIGHT})
         self.nonExtrudeMove({'X': 0, 'Y': 0})
         self.extrudeMove({'E': self.SYRINGE_CAPACITY, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Open syringe holder.')
-        self.beep(0.3)
+        self.beep()
         self.waitForUserInput()
         self.extrudeMove({'E': 0, 'F': VPDScanner.EXTRUSION_MOTOR_FEEDRATE}, 'Close syringe holder so it is ready for the next cycle.')
     
@@ -530,4 +551,5 @@ class VPDScanner(marlinPrinter):
         self.relativePos()
         self.nonExtrudeMove({'Z': 15}, "Raize Z.")
         self.absPos()
-        self.nonExtrudeMove({'X': 0, 'Y': marlinPrinter.Y_MAX}, "Present print.")
+        # Using 'commands.append' avoids the adjustments for head offset, which are unnecesary here
+        self.commands.append({'X': 0, 'Y': marlinPrinter.Y_MAX}, "Present print.")

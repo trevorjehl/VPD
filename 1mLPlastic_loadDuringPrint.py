@@ -19,19 +19,20 @@ def changeDefaultParams(classInstance):
     # ALL VALUES IN MM UNLESS OTHERWISE NOTED #
     ###########################################
     
-    #ENDER 3 CONSTRAINTS
+    ### ENDER 3 CONSTRAINTS ###
     # marlinPrinter.X_MAX = 220
     # marlinPrinter.Y_MAX = 220
     # marlinPrinter.Z_MAX = 250
+    ###########################
 
    # PROCESS VALUES (in mm unless otherwuise noted)
     VPDScanner.TRAVEL_FEEDRATE = 1000 # Standard is 3000
     VPDScanner.SCANNING_MOVE_FEEDRATE = 100 # Adjust as needed to maintain hold of drop
     VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 10
 
-    VPDScanner.SCAN_HEIGHT = 1.5
+    VPDScanner.SCAN_HEIGHT = 2.0
     # VPDScanner.TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
-    VPDScanner.DROPLET_SIZE = 25 #mm
+    VPDScanner.DROPLET_DIAMETER = 4 #mm
 
     VPDScanner.CUEVETTE_X = 190.5
     VPDScanner.CUEVETTE_Y = 47.5
@@ -52,13 +53,13 @@ def changeDefaultParams(classInstance):
 
 def main(filename):
     """ Main entry point of the app """
-    scanner = VPDScanner(filename, xOffset = -7.5, yOffset = 10.52, zOffset = 0.0, sample_volume= 0.05)
+    scanner = VPDScanner(filename, xOffset = -8, yOffset = 11, zOffset = 0.0, sample_volume= 0.05)
     changeDefaultParams(scanner)
 
     scanner.startGCode()
     scanner.loadSyringe()
     scanner.doWaferScan()
-    
+
     # scanner.useCuevette(dispense = True)
     scanner.unloadSyringe()
 
