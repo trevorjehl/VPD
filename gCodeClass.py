@@ -32,15 +32,16 @@ class marlinPrinter:
     Y_MAX = 235
     Z_MAX = 250
 
-    def __init__(self, filename, xOffset=-8.3, yOffset=17.02, zOffset=0):
+    X_OFFSET = -8
+    Y_OFFSET = 11
+    Z_OFFSET = 0
+
+    def __init__(self, filename):
         """
         Creates the internal command list, captures the gcode filename to write to,
         defines the nozzle offset for the printer.
         """
         self.filename = filename
-        self.xOffset = xOffset
-        self.yOffset = yOffset
-        self.zOffset = zOffset
 
         self.commands = []  # Create list of G-Code commands
 
@@ -84,11 +85,11 @@ class marlinPrinter:
 
             for axis, value in coords.items():
                 if axis == "X":
-                    coords["X"] = value + self.xOffset
+                    coords["X"] = value + marlinPrinter.X_OFFSET
                 if axis == "Y":
-                    coords["Y"] = value + self.yOffset
+                    coords["Y"] = value + marlinPrinter.Y_OFFSET
                 if axis == "Z":
-                    coords["Z"] = value + self.zOffset
+                    coords["Z"] = value + marlinPrinter.Z_OFFSET
 
             return coords
 
@@ -155,10 +156,10 @@ class marlinPrinter:
         for axis, value in coords.items():
             value = float(value)
             if axis == "X":
-                fixedX = value - self.xOffset
+                fixedX = value - marlinPrinter.X_OFFSET
                 coords["X"] = f"{fixedX:.4f}"
             if axis == "Y":
-                fixedY = value - self.yOffset
+                fixedY = value - marlinPrinter.Y_OFFSET
                 coords["Y"] = f"{fixedY:.4f}"
 
         return coords
@@ -206,11 +207,9 @@ class marlinPrinter:
         for axis, value in coords.items():
             if axis == "X":
                 move += f" I{value}"
-                # fixedX = float(value) - self.xOffset
-                # move += f' I{fixedX:.4f}'
+
             if axis == "Y":
-                # fixedY = float(value) - self.yOffset
-                # move += f' J{fixedY:.4f}'
+
                 move += f" J{value}"
 
         if move != "G2":
@@ -227,7 +226,6 @@ class marlinPrinter:
         move = "G3"
         x = float(coords["X"])
         y = float(coords["Y"])
-        print(f"xAbs: {x} yAbs: {y}")
         theta_rad = math.radians(theta_deg)
 
         # Calculate the end point of the arc
@@ -333,28 +331,28 @@ class marlinPrinter:
 
 class VPDScanner(marlinPrinter):
     # PROCESS VALUES (in mm unless otherwuise noted)
-    TRAVEL_FEEDRATE = 4000  # Standard is 3000
-    SCANNING_MOVE_FEEDRATE = 1000  # Adjust as needed
+    TRAVEL_FEEDRATE = 2000  # Standard is 3000
+    SCANNING_MOVE_FEEDRATE = 100  # Adjust as needed
     EXTRUSION_MOTOR_FEEDRATE = 10
 
-    SCAN_HEIGHT = 3  # How high from the z-stop should the tip be to scan?
+    SCAN_HEIGHT = 2.6  # How high from the z-stop should the tip be to scan?
     TRAVEL_HEIGHT = 40  # Make sure this is well above the cuevette lid height
-    DROPLET_DIAMETER = 3  # mm
+    DROPLET_DIAMETER = 4  # mm
 
-    CUEVETTE_X = 200
-    CUEVETTE_Y = 25
-    CUEVETTE_Z = 10
+    CUEVETTE_X = 190.5
+    CUEVETTE_Y = 47.5
+    CUEVETTE_Z = 4
 
     # Wafer specific global vars (in mm unless otherwuise noted)
-    WAFER_DIAM = 101.6  # 4in wafer
-    EDGE_GAP = 5  # How far in from the wafer edge to scan
+    WAFER_DIAM = 100.0  # 4in wafer
+    EDGE_GAP = 10  # How far in from the wafer edge to scan
 
     # Only adjust the paramaters below if the physical gears are modified
     RACK_TEETH_PER_CM = 6.36619
     GEAR_TEETH = 30
 
-    SYRINGE_CAPACITY = 0.500
-    SYRINGE_LENGTH = 60
+    SYRINGE_CAPACITY = 1.0
+    SYRINGE_LENGTH = 58.0
 
     def __init__(self, filename, sample_volume, **kwargs):
         """"
@@ -378,9 +376,6 @@ class VPDScanner(marlinPrinter):
         mL = VPDScanner.SYRINGE_CAPACITY
         mm = VPDScanner.SYRINGE_LENGTH
 
-        # print(f"ml = {mL}")
-        # print(f"mm = {mm}")
-
         stepsPerRotation = 3200
         stepsPerDeg = stepsPerRotation / 360
 
@@ -396,8 +391,6 @@ class VPDScanner(marlinPrinter):
         degreePerML = 1 / mLPerGearDegree
 
         stepsPerML = degreePerML * stepsPerDeg
-
-        # print(f"stepsPerML = {stepsPerML}")
 
         return stepsPerML
 
@@ -490,8 +483,8 @@ class VPDScanner(marlinPrinter):
         # move over cuevette
         self.nonExtrudeMove(
             {
-                "X": VPDScanner.CUEVETTE_X - self.xOffset,
-                "Y": VPDScanner.CUEVETTE_Y - self.yOffset,
+                "X": VPDScanner.CUEVETTE_X - marlinPrinter.X_OFFSET,
+                "Y": VPDScanner.CUEVETTE_Y - marlinPrinter.Y_OFFSET,
             }
         )
         # Go in to the cuevette
@@ -506,7 +499,7 @@ class VPDScanner(marlinPrinter):
     def centerHead(self):
         """"
         Center the head (XY) over the center of the wafer.
-        This function assumes the xOffset & yOffset have been set correctly
+        This function assumes the xOffset & marlinPrinter.Y_OFFSET have been set correctly
         such that the syringe tip will be over the XY center of the build area.
         """
         self.nonExtrudeMove(

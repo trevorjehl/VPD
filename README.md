@@ -22,7 +22,9 @@ foo@bar:~$ python3 GCodeCaller.py filename.gcode
 This will create a *.gcode* file in your local directory according to the settings and steps outlined in GCodeCaller.py.
 
 ## Modifying The Scan Routine
-Refer to (CUSTOM_SCAN)[CUSTOM_SCAN.md].
+Refer to [CUSTOM_SCAN.md](CUSTOM_SCAN.md). This includes various wafer sizes, using cuevettes for dispensing/collecting fluid, changing the location of the cuevette, scan speed, etc.
+
+This project was created with customization in mind.
 
 ## Credits
 This project was made in collaboration with Uriel Valencia. Overseen by [Alexander Denton](https://profiles.stanford.edu/alexander-denton), Stanford Nanofabrication Facility.
@@ -31,6 +33,4 @@ This project was made in collaboration with Uriel Valencia. Overseen by [Alexand
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
+For further details, see <https://www.gnu.org/licenses/>.
