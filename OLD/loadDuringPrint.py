@@ -6,7 +6,7 @@ Created Aug 2023
 by Trevor Jehl
 """
 
-from gCodeClass import *
+from OLD.gCodeClass import *
 import sys
 
 def changeDefaultParams(classInstance):

@@ -1,10 +1,22 @@
 #!/usr/bin/env python3
 """
-Two Python classes for use in a VPD scanner. The
-'marlinPrinter' class uses python to write native 
-G-Code commands. The 'VPDScanner' class uses the 
-native G-Code commands to create functions relevant
-to VPD droplet scanning.
+gCodeClass.py creates G-Code and VPDScanner classes,
+which use G-Code to produce the commands neccesary to scan
+a silicon wafer with a droplet.
+Copyright (C) Trevor Jehl, Stanford Nanofabrication Facility
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Created Jul 2023
 by Trevor Jehl
@@ -514,6 +526,9 @@ class VPDScanner(marlinPrinter):
 
             rotation_count += 1
         
+        # Drop the head down a little bit to pick up the drop better
+        self.nonExtrudeMove({'Z': VPDScanner.SCAN_HEIGHT - 0.5, 'F': VPDScanner.SCANNING_MOVE_FEEDRATE * 2})
+        
         # Rotate backwards in an arc, picking up the drop
         self.doCCWArc({'X': (marlinPrinter.X_MAX/2) + current_offset, 'Y': marlinPrinter.Y_MAX/2, 'E': self.SYRINGE_CAPACITY}, (xRel, yRel), current_offset, 60, 'arc')
 
@@ -552,4 +567,4 @@ class VPDScanner(marlinPrinter):
         self.nonExtrudeMove({'Z': 15}, "Raize Z.")
         self.absPos()
         # Using 'commands.append' avoids the adjustments for head offset, which are unnecesary here
-        self.commands.append({'X': 0, 'Y': marlinPrinter.Y_MAX}, "Present print.")
+        self.commands.append(f'G0 X0.0000 Y{marlinPrinter.Y_MAX} F{VPDScanner.TRAVEL_FEEDRATE} ;Present print.')
