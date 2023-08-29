@@ -26,7 +26,7 @@ This will create a *.gcode* file in your local directory according to the settin
 For more permanent installation, the .gcode file can be copied over to the 3D printer's SD/microSD card, which can then be run using the 3D printer's interface
 
 ## Modifying The Scan Routine
-Refer to [CUSTOM_SCAN.md](CUSTOM_SCAN.md) for detailed documentation, including various wafer sizes, using cuevettes for dispensing/collecting fluid, changing the location of the cuevette, scan speed, etc.
+Refer to [CUSTOM_SCAN.md](/Guides%20&%20Additional%20Documentation/CUSTOM_SCAN.md) for detailed documentation, including various wafer sizes, using cuevettes for dispensing/collecting fluid, changing the location of the cuevette, scan speed, etc.
 
 This project was created with customization in mind, and is therefore easy to modify to suit your needs.
 

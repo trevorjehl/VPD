@@ -336,7 +336,7 @@ class marlinPrinter:
 
 #####################################################
 #####################################################
-############### BEGIN CUSTOM COMMANDS ###############
+################ BEGIN SCANNER CLASS ################
 #####################################################
 #####################################################
 
@@ -485,10 +485,10 @@ class VPDScanner(marlinPrinter):
     def useCuevette(self, dispense: bool):
         """
         If dispense is true, will dispense sample. Otherwise 
-        will collect sample.
-        Using the cuevette measurements (found in
-        global variables), move up, move over, move down,
-        and deposit the scanned droplet.
+        will collect sample. Using the cuevette measurements 
+        (found in scanner class vars ), move up, move over, move down,
+        and deposit the scanned droplet. At the end, move the needle 
+        up to clear it out of the way.
         """
         # move up
         self.nonExtrudeMove({"Z": VPDScanner.TRAVEL_HEIGHT})
@@ -539,8 +539,8 @@ class VPDScanner(marlinPrinter):
             },
             "Move to max radius",
         )
+        # Dispense the sample at the max radius
         self.extrudeMove({"E": 0, "F": VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
-        # self.dispenseSample()
 
         rotation_count = 0
         while rotation_count < max_rotations:
@@ -592,7 +592,8 @@ class VPDScanner(marlinPrinter):
     def loadSyringe(self):
         """
         At the start of any given cycle, ready the system so 
-        that a full syringe may be loaded in.
+        that a full syringe may be loaded in. Only opens the 
+        syringe to the sample volume.
         """
         self.nonExtrudeMove({"Z": VPDScanner.TRAVEL_HEIGHT})
         self.nonExtrudeMove({"X": 0, "Y": 0})
@@ -610,7 +611,9 @@ class VPDScanner(marlinPrinter):
     def unloadSyringe(self):
         """
         At the start of any given cycle, ready the system so 
-        that a full syringe may be loaded in.
+        that a syringe filled with scanning solution may be 
+        unloaded. The system will open the syringe to it's full
+        capacity to facilitate removal.
         """
         self.nonExtrudeMove({"Z": VPDScanner.TRAVEL_HEIGHT})
         self.nonExtrudeMove({"X": 0, "Y": 0})
