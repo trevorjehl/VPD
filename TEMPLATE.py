@@ -47,34 +47,34 @@ def changeDefaultParams(classInstance):
     # marlinPrinter.Z_MAX = 250
     #############################
 
-    # MOTOR SPEEDS
-    VPDScanner.TRAVEL_FEEDRATE = 2000  # Controls travel movement speed
-    # Controls scanning speed. Adjust as needed to maintain hold of drop
-    VPDScanner.SCANNING_MOVE_FEEDRATE = 100
-    VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 10
+    # # MOTOR SPEEDS
+    # VPDScanner.TRAVEL_FEEDRATE = 2000  # Controls travel movement speed
+    # # Controls scanning speed. Adjust as needed to maintain hold of drop
+    # VPDScanner.SCANNING_MOVE_FEEDRATE = 100
+    # VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 10
 
-    # Vertical offset (from the z endstop) to scan the drop at
-    VPDScanner.SCAN_HEIGHT = 2.6
-    # Make sure this is well above the highest point (cuevette lid)
-    VPDScanner.TRAVEL_HEIGHT = 40
+    # # Vertical offset (from the z endstop) to scan the drop at
+    # VPDScanner.SCAN_HEIGHT = 2.6
+    # # Make sure this is well above the highest point (cuevette lid)
+    # VPDScanner.TRAVEL_HEIGHT = 40
 
-    # CUEVETTE INFO (XYZ location of the cuevette)
-    VPDScanner.CUEVETTE_X = 190.5
-    VPDScanner.CUEVETTE_Y = 47.5
-    VPDScanner.CUEVETTE_Z = 4
+    # # CUEVETTE INFO (XYZ location of the cuevette)
+    # VPDScanner.CUEVETTE_X = 190.5
+    # VPDScanner.CUEVETTE_Y = 47.5
+    # VPDScanner.CUEVETTE_Z = 4
 
-    # WAFER VARIABLES
-    VPDScanner.WAFER_DIAM = 100.0  # 100mm = 4in wafer
-    VPDScanner.EDGE_GAP = 10  # How far in from the wafer edge to scan
-    VPDScanner.DROPLET_DIAMETER = 4  # mm
+    # # WAFER VARIABLES
+    # VPDScanner.WAFER_DIAM = 100.0  # 100mm = 4in wafer
+    # VPDScanner.EDGE_GAP = 10  # How far in from the wafer edge to scan
+    # VPDScanner.DROPLET_DIAMETER = 4  # mm
 
-    # SCAN HEAD VARIABLES
-    # Do not change the syringe variables unless a different syringe is being used.
-    VPDScanner.SYRINGE_CAPACITY = 1.0
-    VPDScanner.SYRINGE_LENGTH = 58.0
-    # Do not change the following variables unless the physical gears have been changed.
-    VPDScanner.RACK_TEETH_PER_CM = 6.36619
-    VPDScanner.GEAR_TEETH = 30
+    # # SCAN HEAD VARIABLES
+    # # Do not change the syringe variables unless a different syringe is being used.
+    # VPDScanner.SYRINGE_CAPACITY = 1.0
+    # VPDScanner.SYRINGE_LENGTH = 58.0
+    # # Do not change the following variables unless the physical gears have been changed.
+    # VPDScanner.RACK_TEETH_PER_CM = 6.36619
+    # VPDScanner.GEAR_TEETH = 30
 
 
 def main(filename):

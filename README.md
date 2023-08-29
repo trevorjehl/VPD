@@ -16,9 +16,11 @@ To download the project, copy all project files to your hard drive. This can be 
 
 ## Command Line Usage
 To create a new G-Code file, use the following command line syntax:
+
 ```console
 foo@bar:~$ python3 GCodeCaller.py filename.gcode
 ```
+
 This will create a *.gcode* file in your local directory according to the settings and steps outlined in GCodeCaller.py. To run this easily on the Ender 3 3D printer (or similar), two methods can be used. For testing, software such as Repetier Host can be used, which communicates with 3D Printers over USB.
 
 For more permanent installation, the .gcode file can be copied over to the 3D printer's SD/microSD card, which can then be run using the 3D printer's interface
