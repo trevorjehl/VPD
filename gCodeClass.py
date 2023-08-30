@@ -543,6 +543,7 @@ class VPDScanner(marlinPrinter):
         self.extrudeMove({"E": 0, "F": VPDScanner.EXTRUSION_MOTOR_FEEDRATE})
 
         rotation_count = 0
+        current_offset = max_radius - (rotation_count * VPDScanner.DROPLET_DIAMETER)
         while rotation_count < max_rotations:
             # Calculate the current scan radius (from center)
             current_offset = max_radius - (rotation_count * VPDScanner.DROPLET_DIAMETER)
@@ -598,7 +599,7 @@ class VPDScanner(marlinPrinter):
         self.nonExtrudeMove({"Z": VPDScanner.TRAVEL_HEIGHT})
         self.centerHead()
         self.extrudeMove(
-            {"E": self.SYRINGE_CAPACITY / 3, "F": VPDScanner.EXTRUSION_MOTOR_FEEDRATE},
+            {"E": self.SYRINGE_CAPACITY / 5, "F": VPDScanner.EXTRUSION_MOTOR_FEEDRATE},
             "Open syringe holder.",
         )
         self.extrudeMove(

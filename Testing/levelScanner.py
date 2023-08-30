@@ -23,8 +23,12 @@ tjehl@stanford.edu
 Stanford Nanofabrication Facility 2023
 """
 
+import numpy as np
+import sys, os
+
+# Allow imports from parent directory
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from gCodeClass import *
-import sys
 
 def changeDefaultParams(classInstance):
     """"
@@ -47,9 +51,9 @@ def changeDefaultParams(classInstance):
     VPDScanner.SCANNING_MOVE_FEEDRATE = 90  # Adjust as needed to maintain hold of drop
     VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 10
 
-    VPDScanner.SCAN_HEIGHT = 1.5
+    VPDScanner.SCAN_HEIGHT = 3.0
     # VPDScanner.TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
-    VPDScanner.DROPLET_DIAMETER = 4  # mm
+    VPDScanner.DROPLET_DIAMETER = 40  # mm
 
     VPDScanner.CUEVETTE_X = 190.5
     VPDScanner.CUEVETTE_Y = 47.5
@@ -72,15 +76,48 @@ def main(filename):
     """ 
     Initializes, calls, and executes G-Code commands.
     """
-    scanner = VPDScanner(filename, sample_volume=0.1)
+    scanner = VPDScanner(filename, sample_volume=0.05)
     changeDefaultParams(scanner)
 
     scanner.startGCode()
 
     scanner.loadSyringe()
-    scanner.doWaferScan()
 
-    # scanner.useCuevette(dispense = True)
+    scanner.centerHead()
+    scanner.nonExtrudeMove({'Z': 0, 'F': 500})
+
+    max_radius = (VPDScanner.WAFER_DIAM / 2) - VPDScanner.EDGE_GAP
+
+    # 2 axes (X & Y)
+    for axis in ['X', 'Y']:
+        #Go positive first, then negative
+        for direction in [1, -1]:
+            scanner.relativePos()
+            # Use of commands.append instead of scanner.nonExtrudeMove to avoid 
+            # the head offset interfereing with relative coords\
+            scanner.commands.append(f"G0 {axis}{direction * max_radius:.4f} F500 ")
+
+            scanner.beep()
+            scanner.waitForUserInput()
+
+            scanner.absPos()
+            scanner.centerHead
+    
+    # Now do the points in between the previous points
+    X_component = max_radius * math.cos(math.radians(45))
+    Y_component = max_radius * math.sin(math.radians(45))
+
+    for x_dir in [1, -1]:
+        for y_dir in [1, -1]:
+            scanner.relativePos()
+            scanner.commands.append(f"G0 X{ x_dir * X_component:.4f} Y{ y_dir * Y_component:.4f} F500 ")
+
+            scanner.beep()
+            scanner.waitForUserInput()
+
+            scanner.absPos()
+            scanner.centerHead
+
     scanner.unloadSyringe()
 
     scanner.endGCode()

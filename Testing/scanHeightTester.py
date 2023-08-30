@@ -23,10 +23,12 @@ tjehl@stanford.edu
 Stanford Nanofabrication Facility 2023
 """
 
-from gCodeClass import *
 import numpy as np
-import sys
+import sys, os
 
+# Allow imports from parent directory
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from gCodeClass import *
 
 def changeDefaultParams(classInstance):
     """"
@@ -78,19 +80,18 @@ def main(filename):
     changeDefaultParams(scanner)
 
 
-    start_height = 1.6
-    end_height = 3.0
+    start_height = 1.0
+    end_height = 2.0
     increment = 0.2
 
     VPDScanner.SCAN_HEIGHT = start_height
 
-    num_cycles = (end_height - start_height - 1) // increment + 1
+    num_cycles = (end_height - start_height) // increment + 1
     print(f"The loop will run {num_cycles} cycles.")
 
     scanner.startGCode()
-    for height in np.arange(start_height, end_height + increment, increment):
+    for height in np.arange(start_height, end_height, increment):
         VPDScanner.SCAN_HEIGHT = height
-        print(VPDScanner.SCAN_HEIGHT)
 
         scanner.loadSyringe()
         scanner.doWaferScan()
