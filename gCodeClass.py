@@ -208,8 +208,9 @@ class marlinPrinter:
     def doCircle(self, coords, comment=None):
         """
         Moves the printehead in a complete circle around the point
-        specified by the coords dictionary. The values in the dictionary
-        are RELATIVE, not absolute.
+        specified by the coords dictionary. The values in the 
+        dictionary are the relative coordinates from the printhead
+        to the center of rotation.
         >>> doCircle([], {'X': 20, 'Y': 20})
         ['G2 I20.0000 J20.0000']
         """
@@ -232,8 +233,9 @@ class marlinPrinter:
     @sanitizeCoords
     def doCCWArc(self, coords, center_offset, radius, theta_deg, comment=None):
         """
-        Given coords dict(center of rotation), arc radius, an angle,
-        rotate around the center point theta degrees.
+        Given coords dict(center of rotation), the vector from the printhead to
+        the center of rot, arc radius, an angle, rotate around the center point
+        theta degrees.
         """
         move = "G3"
         x = float(coords["X"])
@@ -335,9 +337,7 @@ class marlinPrinter:
 
 
 #####################################################
-#####################################################
 ################ BEGIN SCANNER CLASS ################
-#####################################################
 #####################################################
 
 
@@ -596,7 +596,7 @@ class VPDScanner(marlinPrinter):
         syringe to the sample volume.
         """
         self.nonExtrudeMove({"Z": VPDScanner.TRAVEL_HEIGHT})
-        self.nonExtrudeMove({"X": 0, "Y": 0})
+        self.centerHead()
         self.extrudeMove(
             {"E": self.SYRINGE_CAPACITY / 3, "F": VPDScanner.EXTRUSION_MOTOR_FEEDRATE},
             "Open syringe holder.",
@@ -616,7 +616,7 @@ class VPDScanner(marlinPrinter):
         capacity to facilitate removal.
         """
         self.nonExtrudeMove({"Z": VPDScanner.TRAVEL_HEIGHT})
-        self.nonExtrudeMove({"X": 0, "Y": 0})
+        self.centerHead()
         self.extrudeMove(
             {"E": self.SYRINGE_CAPACITY, "F": VPDScanner.EXTRUSION_MOTOR_FEEDRATE},
             "Open syringe holder.",

@@ -24,6 +24,7 @@ Stanford Nanofabrication Facility 2023
 """
 
 from gCodeClass import *
+import numpy as np
 import sys
 
 
@@ -50,7 +51,7 @@ def changeDefaultParams(classInstance):
 
     VPDScanner.SCAN_HEIGHT = 3.0
     # VPDScanner.TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
-    VPDScanner.DROPLET_DIAMETER = 3  # mm
+    VPDScanner.DROPLET_DIAMETER = 40  # mm
 
     VPDScanner.CUEVETTE_X = 190.5
     VPDScanner.CUEVETTE_Y = 47.5
@@ -76,13 +77,24 @@ def main(filename):
     scanner = VPDScanner(filename, sample_volume=0.05)
     changeDefaultParams(scanner)
 
+
+    start_height = 1.6
+    end_height = 3.0
+    increment = 0.2
+
+    VPDScanner.SCAN_HEIGHT = start_height
+
+    num_cycles = (end_height - start_height - 1) // increment + 1
+    print(f"The loop will run {num_cycles} cycles.")
+
     scanner.startGCode()
+    for height in np.arange(start_height, end_height + increment, increment):
+        VPDScanner.SCAN_HEIGHT = height
+        print(VPDScanner.SCAN_HEIGHT)
 
-    scanner.loadSyringe()
-    scanner.doWaferScan()
-
-    # scanner.useCuevette(dispense = True)
-    scanner.unloadSyringe()
+        scanner.loadSyringe()
+        scanner.doWaferScan()
+        scanner.unloadSyringe()
 
     scanner.endGCode()
     scanner.writeToFile()

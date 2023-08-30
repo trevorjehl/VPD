@@ -1,5 +1,6 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 ![Static Badge](https://img.shields.io/badge/PRs-Welcome-green)
+![Static Badge](https://img.shields.io/badge/Python_Style-Black-black)
 
 # Low-Cost Open Source Vapor Phase Decomposition Scanner
 
