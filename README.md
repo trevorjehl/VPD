@@ -6,6 +6,8 @@
 
 This purpose of this project is to create a low-cost vapor phase decomposition droplet scanner for use in semiconductor research labs. 
 
+![Scanner_Running_gif](/Guides%20&%20Additional%20Documentation/Assets/scannerRunning.gif)
+
 <!-- ## Table of Contents
 
 | Sections      | Description  |

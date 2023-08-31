@@ -10,3 +10,6 @@
 *.3mf linguist-vendored
 *.stl linguist-vendored
 *.dxf linguist-vendored
+
+# Ignore GIf for Linguist
+*.gif linguist-vendored
