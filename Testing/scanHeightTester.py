@@ -27,11 +27,12 @@ import numpy as np
 import sys, os
 
 # Allow imports from parent directory
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from gCodeClass import *
 
+
 def changeDefaultParams(classInstance):
-    """"
+    """ "
     If you would like to change any of the defualt parameters,
     you may do so by uncommenting and changing these lines. Otherwise,
     they will remain as defuault and configured for the Ender 3.
@@ -51,13 +52,13 @@ def changeDefaultParams(classInstance):
     VPDScanner.SCANNING_MOVE_FEEDRATE = 90  # Adjust as needed to maintain hold of drop
     VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 10
 
-    VPDScanner.SCAN_HEIGHT = 3.0
+    # VPDScanner.SCAN_HEIGHT = 3.0
     # VPDScanner.TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
     VPDScanner.DROPLET_DIAMETER = 40  # mm
 
-    VPDScanner.CUEVETTE_X = 190.5
-    VPDScanner.CUEVETTE_Y = 47.5
-    VPDScanner.CUEVETTE_Z = 4
+    # VPDScanner.CUEVETTE_X = 190.5
+    # VPDScanner.CUEVETTE_Y = 47.5
+    # VPDScanner.CUEVETTE_Z = 4
 
     # Wafer specific global vars (in mm unless otherwuise noted)
     VPDScanner.WAFER_DIAM = 100  # 4in wafer
@@ -73,12 +74,11 @@ def changeDefaultParams(classInstance):
 
 
 def main(filename):
-    """ 
+    """
     Initializes, calls, and executes G-Code commands.
     """
     scanner = VPDScanner(filename, sample_volume=0.05)
     changeDefaultParams(scanner)
-
 
     start_height = 1.0
     end_height = 2.0

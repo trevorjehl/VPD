@@ -27,11 +27,12 @@ import numpy as np
 import sys, os
 
 # Allow imports from parent directory
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from gCodeClass import *
 
+
 def changeDefaultParams(classInstance):
-    """"
+    """ "
     If you would like to change any of the defualt parameters,
     you may do so by uncommenting and changing these lines. Otherwise,
     they will remain as defuault and configured for the Ender 3.
@@ -53,7 +54,7 @@ def changeDefaultParams(classInstance):
 
     VPDScanner.SCAN_HEIGHT = 1.5
     # VPDScanner.TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
-    VPDScanner.DROPLET_DIAMETER = 20  # mm
+    VPDScanner.DROPLET_DIAMETER = 39  # mm
 
     VPDScanner.CUEVETTE_X = 190.5
     VPDScanner.CUEVETTE_Y = 47.5
@@ -61,7 +62,7 @@ def changeDefaultParams(classInstance):
 
     # Wafer specific global vars (in mm unless otherwuise noted)
     VPDScanner.WAFER_DIAM = 100  # 4in wafer
-    VPDScanner.EDGE_GAP = 30  # How far in from the wafer edge to scan
+    VPDScanner.EDGE_GAP = 10  # How far in from the wafer edge to scan
 
     # VPDScanner.RACK_TEETH_PER_CM = 3.183
     # VPDScanner.GEAR_TEETH = 16
@@ -73,16 +74,15 @@ def changeDefaultParams(classInstance):
 
 
 def main(filename):
-    """ 
+    """
     Initializes, calls, and executes G-Code commands.
     """
     scanner = VPDScanner(filename, sample_volume=0.05)
     changeDefaultParams(scanner)
 
-
     start_volume = 0.05
     end_volume = 0.15
-    increment = 0.01
+    increment = 0.02
 
     num_cycles = (end_volume - start_volume) // increment + 1
     print(f"The loop will run {num_cycles} cycles.")
@@ -97,7 +97,7 @@ def main(filename):
         scanner.loadSyringe()
         scanner.doWaferScan()
         scanner.unloadSyringe()
-        
+
         all_commands.append(scanner.commands)
 
     scanner_final = VPDScanner(filename, volume)
@@ -114,7 +114,6 @@ def main(filename):
         for list in all_commands:
             for command in list:
                 file.write(f"{command}\n")
-
 
 
 if __name__ == "__main__":

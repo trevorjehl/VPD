@@ -11,7 +11,7 @@ import sys
 
 
 def main(filename, repeats):
-    """ Main entry point of the app """
+    """Main entry point of the app"""
 
     if ".gcode" not in filename:
         filename += ".gcode"
@@ -32,7 +32,7 @@ def main(filename, repeats):
 
 
 if __name__ == "__main__":
-    """ This is executed when run from the command line """
+    """This is executed when run from the command line"""
 
     args = sys.argv[1:]
 

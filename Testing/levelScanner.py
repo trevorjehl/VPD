@@ -27,11 +27,12 @@ import numpy as np
 import sys, os
 
 # Allow imports from parent directory
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from gCodeClass import *
 
+
 def changeDefaultParams(classInstance):
-    """"
+    """ "
     If you would like to change any of the defualt parameters,
     you may do so by uncommenting and changing these lines. Otherwise,
     they will remain as defuault and configured for the Ender 3.
@@ -51,17 +52,13 @@ def changeDefaultParams(classInstance):
     VPDScanner.SCANNING_MOVE_FEEDRATE = 90  # Adjust as needed to maintain hold of drop
     VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 10
 
-    VPDScanner.SCAN_HEIGHT = 3.0
+    # VPDScanner.SCAN_HEIGHT = 3.0
     # VPDScanner.TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
-    VPDScanner.DROPLET_DIAMETER = 40  # mm
-
-    VPDScanner.CUEVETTE_X = 190.5
-    VPDScanner.CUEVETTE_Y = 47.5
-    VPDScanner.CUEVETTE_Z = 4
+    # VPDScanner.DROPLET_DIAMETER = 40  # mm
 
     # Wafer specific global vars (in mm unless otherwuise noted)
     VPDScanner.WAFER_DIAM = 100  # 4in wafer
-    VPDScanner.EDGE_GAP = 10  # How far in from the wafer edge to scan
+    VPDScanner.EDGE_GAP = 4  # How far in from the wafer edge to scan
 
     # VPDScanner.RACK_TEETH_PER_CM = 3.183
     # VPDScanner.GEAR_TEETH = 16
@@ -73,10 +70,13 @@ def changeDefaultParams(classInstance):
 
 
 def main(filename):
-    """ 
-    Initializes, calls, and executes G-Code commands.
     """
-    scanner = VPDScanner(filename, sample_volume=0.05)
+    Go to the four corners of the 4in wafer. Beep
+    and wait at each corner, waiting for user input. After
+    the first cycle, go to each corner again. Then unload
+    syringe and reset the printer.
+    """
+    scanner = VPDScanner(filename, sample_volume=0.00)
     changeDefaultParams(scanner)
 
     scanner.startGCode()
@@ -84,39 +84,28 @@ def main(filename):
     scanner.loadSyringe()
 
     scanner.centerHead()
-    scanner.nonExtrudeMove({'Z': 0, 'F': 500})
+    scanner.nonExtrudeMove({"Z": 0, "F": 500})
 
     max_radius = (VPDScanner.WAFER_DIAM / 2) - VPDScanner.EDGE_GAP
 
-    # 2 axes (X & Y)
-    for axis in ['X', 'Y']:
-        #Go positive first, then negative
-        for direction in [1, -1]:
-            scanner.relativePos()
-            # Use of commands.append instead of scanner.nonExtrudeMove to avoid 
-            # the head offset interfereing with relative coords\
-            scanner.commands.append(f"G0 {axis}{direction * max_radius:.4f} F500 ")
-
-            scanner.beep()
-            scanner.waitForUserInput()
-
-            scanner.absPos()
-            scanner.centerHead
-    
-    # Now do the points in between the previous points
     X_component = max_radius * math.cos(math.radians(45))
     Y_component = max_radius * math.sin(math.radians(45))
 
-    for x_dir in [1, -1]:
-        for y_dir in [1, -1]:
-            scanner.relativePos()
-            scanner.commands.append(f"G0 X{ x_dir * X_component:.4f} Y{ y_dir * Y_component:.4f} F500 ")
+    # Do the whole thing twice
+    for i in range(2):
+        for x_dir in [1, -1]:
+            for y_dir in [1, -1]:
+                scanner.relativePos()
+                # Using commands.append avoids the head offset
+                scanner.commands.append(
+                    f"G0 X{ x_dir * X_component:.4f} Y{ y_dir * Y_component:.4f} F500 "
+                )
 
-            scanner.beep()
-            scanner.waitForUserInput()
+                scanner.beep()
+                scanner.waitForUserInput()
 
-            scanner.absPos()
-            scanner.centerHead
+                scanner.absPos()
+                scanner.centerHead()
 
     scanner.unloadSyringe()
 
