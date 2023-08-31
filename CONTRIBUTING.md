@@ -66,7 +66,7 @@ Ensure that you write tests for any new features or fixes you implement. Tests h
 
 ## Feedback and Questions
 
-If you have questions or need feedback, feel free to open an issue in the repository or contact me at tjehl@stanford.edu
+If you have questions or need feedback, feel free to open an issue in the repository or contact me at tjehl@stanford.edu.
 
 ---
 

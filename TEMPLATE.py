@@ -28,7 +28,7 @@ import sys
 
 
 def changeDefaultParams(classInstance):
-    """"
+    """
     If you would like to change any of the defualt parameters,
     you may do so by uncommenting and changing these lines. Otherwise,
     they will remain as defuault and configured for the Ender 3.
@@ -78,7 +78,7 @@ def changeDefaultParams(classInstance):
 
 
 def main(filename):
-    """ 
+    """
     Initializes, calls, and executes G-Code commands.
     """
     scanner = VPDScanner(filename, sample_volume=0.05)

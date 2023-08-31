@@ -29,17 +29,17 @@ For more permanent installation, the `.gcode` file can be copied over to the 3D 
 ## Modifying The Scan Routine
 Refer to [CUSTOM_SCAN.md](/Guides%20&%20Additional%20Documentation/CUSTOM_SCAN.md) for detailed documentation, including various wafer sizes, using cuevettes for dispensing/collecting fluid, changing the location of the cuevette, scan speed, etc.
 
-This project was created with customization in mind, and is therefore easy to modify to suit your needs. For more in-depth changes, consult [USING_GCODECLASS.md](/Guides%20&%20Additional%20Documentation/USING_GCODECLASS.md). 
+This project was created with customization in mind, and is therefore easy to modify to suit your needs. For more in-depth changes, consult [USING_TEMPLATE.md](/Guides%20&%20Additional%20Documentation/USING_TEMPLATE.md). 
 
 If you do make changes, please contribute per the standards outlined in [CONTRIBUTING.md](CONTRIBUTING.md). As a reminder, if you release the modified version to the public in some way, the GNU license agreement requires you to make the modified source code available to the program's users.
 
 
 ## Project Goals & Next Steps
-- Complete redesign of scan base to be CNC machined from Teflon/PTFE
-- Add wafer piece scanning functionality.
-- Consider methods of increasing scan droplet volume, as this may aid ICP-MS measurements.
-- Design encolosure/spill area to contain the system and any acid that may spill during operation.
-- Create detailed construction/replication instructions with photos for use in other fabs.
+- [ ] Complete redesign of scan base to be CNC machined from Teflon/PTFE
+- [ ] Add wafer piece scanning functionality.
+- [ ] Consider methods of increasing scan droplet volume, as this may aid ICP-MS measurements.
+- [ ] Design encolosure/spill area to contain the system and any acid that may spill during operation.
+- [ ] Create detailed construction/replication instructions with photos for use in other fabs.
 
 ## Credits
 This project was made in collaboration with Uriel Valencia. Overseen by [Alexander Denton](https://profiles.stanford.edu/alexander-denton), Stanford Nanofabrication Facility. 

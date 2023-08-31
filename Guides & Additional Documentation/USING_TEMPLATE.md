@@ -1,11 +1,11 @@
-# A Guide To More In-Depth Code Modification Using `gCodeClass.py`
+# A Guide To More In-Depth Code Modification Using `TEMPLATE.py`
 
 If you have not read the other code documentation, please do so ([README.md](/README.md), [CUSTOM_SCAN.md](CUSTOM_SCAN.md)).
 
-This document discusses the structure, design, and usage of `gCodeClass.py` for more granular modificaitons to the scanning protocols than can be accomplished by only changing pre-existing paramaters and printer actions.
+This document discusses the structure, design, and usage of `TEMPLATE.py` for more granular modificaitons to the scanning protocols than can be accomplished by only changing pre-existing paramaters and printer actions.
 
 ## Basic Structure
-This section provides an overview of the function and design of the `gCodeClass.py` file.
+This section provides an overview of the function and design of the `TEMPLATE.py` file.
 
 The file is divided into two Python classes: `marlinPrinter` & `VPDScanner`. Since the VPD scanner is an abstraction of the functions available on a consumer 3D printer, it was useful to split the functions available into these two categories.
 
