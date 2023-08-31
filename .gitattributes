@@ -13,3 +13,7 @@
 
 # Ignore GIf for Linguist
 *.gif linguist-vendored
+
+# Cura config Linguist ignore
+*.cfg linguist-vendored
+*.json 
