@@ -2,6 +2,8 @@
 ![Static Badge](https://img.shields.io/badge/PRs-Welcome-green)
 ![Static Badge](https://img.shields.io/badge/Python_Style-Black-black)
 
+![Stanford](/Guides%20&%20Additional%20Documentation/Assets/StanfordLogo.png) ![SNF](/Guides%20&%20Additional%20Documentation/Assets/SNF.png)
+
 # Low-Cost Open Source Vapor Phase Decomposition Scanner
 
 This purpose of this project is to create a low-cost vapor phase decomposition droplet scanner for use in semiconductor research labs. 
