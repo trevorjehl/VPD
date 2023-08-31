@@ -22,12 +22,16 @@ by Trevor Jehl
 tjehl@stanford.edu
 Stanford Nanofabrication Facility 2023
 """
-
-from gCodeClass import *
 import sys
+import os
+# Allow imports from parent directory
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from gCodeClass import *
+
+
 
 def changeDefaultParams(classInstance):
-    """"
+    """ "
     If you would like to change any of the defualt parameters,
     you may do so by uncommenting and changing these lines. Otherwise,
     they will remain as defuault and configured for the Ender 3.
@@ -37,42 +41,42 @@ def changeDefaultParams(classInstance):
     ###########################################
 
     ### ENDER 3 CONSTRAINTS ###
-    # marlinPrinter.X_MAX = 220
-    # marlinPrinter.Y_MAX = 220
+    # marlinPrinter.X_MAX = 235
+    # marlinPrinter.Y_MAX = 235
     # marlinPrinter.Z_MAX = 250
     ###########################
 
     # PROCESS VALUES (in mm unless otherwuise noted)
-    VPDScanner.TRAVEL_FEEDRATE = 2000  # Standard is 3000
-    VPDScanner.SCANNING_MOVE_FEEDRATE = 90  # Adjust as needed to maintain hold of drop
-    VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 10
+    # VPDScanner.TRAVEL_FEEDRATE = 2000  # Standard is 3000
+    # VPDScanner.SCANNING_MOVE_FEEDRATE = 80  # Adjust as needed to maintain hold of drop
+    # VPDScanner.EXTRUSION_MOTOR_FEEDRATE = 6
 
-    VPDScanner.SCAN_HEIGHT = 1.5
+    # VPDScanner.SCAN_HEIGHT = 1.5
     # VPDScanner.TRAVEL_HEIGHT = 40 # Make sure this is well above the highest point (cuevette lid)
-    VPDScanner.DROPLET_DIAMETER = 4  # mm
+    # VPDScanner.DROPLET_DIAMETER = 3  # mm
 
-    VPDScanner.CUEVETTE_X = 190.5
-    VPDScanner.CUEVETTE_Y = 47.5
-    VPDScanner.CUEVETTE_Z = 4
+    # VPDScanner.CUEVETTE_X = 190.5
+    # VPDScanner.CUEVETTE_Y = 47.5
+    # VPDScanner.CUEVETTE_Z = 4
 
     # Wafer specific global vars (in mm unless otherwuise noted)
-    VPDScanner.WAFER_DIAM = 100  # 4in wafer
-    VPDScanner.EDGE_GAP = 10  # How far in from the wafer edge to scan
+    VPDScanner.WAFER_DIAM = 150  # 4in wafer
+    # VPDScanner.EDGE_GAP = 10.0  # How far in from the wafer edge to scan
 
     # VPDScanner.RACK_TEETH_PER_CM = 3.183
     # VPDScanner.GEAR_TEETH = 16
-    VPDScanner.RACK_TEETH_PER_CM = 6.36619
-    VPDScanner.GEAR_TEETH = 30
+    # VPDScanner.RACK_TEETH_PER_CM = 6.36619
+    # VPDScanner.GEAR_TEETH = 30
 
-    VPDScanner.SYRINGE_CAPACITY = 1.0
-    VPDScanner.SYRINGE_LENGTH = 58.0
+    # VPDScanner.SYRINGE_CAPACITY = 1.0
+    # VPDScanner.SYRINGE_LENGTH = 58.0
 
 
 def main(filename):
-    """ 
+    """
     Initializes, calls, and executes G-Code commands.
     """
-    scanner = VPDScanner(filename, sample_volume=0.1)
+    scanner = VPDScanner(filename, sample_volume=0.05)
     changeDefaultParams(scanner)
 
     scanner.startGCode()
@@ -80,7 +84,6 @@ def main(filename):
     scanner.loadSyringe()
     scanner.doWaferScan()
 
-    # scanner.useCuevette(dispense = True)
     scanner.unloadSyringe()
 
     scanner.endGCode()

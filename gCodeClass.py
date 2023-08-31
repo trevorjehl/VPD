@@ -35,7 +35,7 @@ class marlinPrinter:
     Z_MAX = 250
 
     X_OFFSET = -8
-    Y_OFFSET = 11
+    Y_OFFSET = 14
     Z_OFFSET = 0
 
     def __init__(self, filename):
@@ -344,12 +344,12 @@ class marlinPrinter:
 class VPDScanner(marlinPrinter):
     # PROCESS VALUES (in mm unless otherwuise noted)
     TRAVEL_FEEDRATE = 2000  # Standard is 3000
-    SCANNING_MOVE_FEEDRATE = 100  # Adjust as needed
-    EXTRUSION_MOTOR_FEEDRATE = 10
+    SCANNING_MOVE_FEEDRATE = 80  # Adjust as needed
+    EXTRUSION_MOTOR_FEEDRATE = 6
 
-    SCAN_HEIGHT = 2.6  # How high from the z-stop should the tip be to scan?
+    SCAN_HEIGHT = 1.5  # How high from the z-stop should the tip be to scan?
     TRAVEL_HEIGHT = 40  # Make sure this is well above the cuevette lid height
-    DROPLET_DIAMETER = 4  # mm
+    DROPLET_DIAMETER = 3  # mm
 
     CUEVETTE_X = 190.5
     CUEVETTE_Y = 47.5
@@ -527,6 +527,7 @@ class VPDScanner(marlinPrinter):
         """
         # Calculate the furthest point out from center (radially)
         max_radius = (VPDScanner.WAFER_DIAM / 2) - VPDScanner.EDGE_GAP
+        min_radius = max_radius # Used to calculate scanned area
         # Divide the radius into smaller arcs to be scanned (thin cylinders radially)
         max_rotations = math.floor(max_radius / VPDScanner.DROPLET_DIAMETER)
 
@@ -567,6 +568,8 @@ class VPDScanner(marlinPrinter):
             )
             self.doCircle({"X": xRel, "Y": yRel})
 
+            min_radius = current_offset
+
             rotation_count += 1
 
         # Drop the head down a little bit to pick up the drop better
@@ -589,6 +592,10 @@ class VPDScanner(marlinPrinter):
             60,
             "arc",
         )
+
+        # print(f"Scanned from radius {max_radius} to {min_radius}.")
+        # print(f"Droplet diameter: {self.DROPLET_DIAMETER}mm.")
+        # print(f"Scanned area: {(math.pi * max_radius**2) - (math.pi * min_radius**2):.1f} mm^2")
 
     def loadSyringe(self):
         """
