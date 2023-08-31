@@ -1,0 +1,74 @@
+{
+    "dismissed": [],
+    "installed": {
+        "AutoTowersGenerator": {
+            "filename": "/Users/trevorj/Library/Application Support/cura/5.4/cache/cura_packages/AutoTowersGenerator.curapackage",
+            "package_info": {
+                "author": {
+                    "author_id": "Kartchnb",
+                    "display_name": "Brad Kartchner",
+                    "email": "kartchnb@gmail.com",
+                    "website": "https://github.com/kartchnb"
+                },
+                "description": "Allows you to quickly and easily print several types of calibration towers without messing around with gcode or post-processing -  Just click and print!\n\nMany pre-generated towers are included in the plugin, but, if OpenSCAD is installed (openscad.org), custom towers can be generated and printed with very little effort.",
+                "display_name": "AutoTowers Generator",
+                "is_active": true,
+                "is_bundled": false,
+                "is_installed": true,
+                "package_id": "AutoTowersGenerator",
+                "package_type": "plugin",
+                "package_version": "2.6.0",
+                "sdk_version": 8,
+                "sdk_version_semver": "8.2.0",
+                "website": "https://github.com/kartchnb/AutoTowersGenerator"
+            }
+        },
+        "CalibrationShapes": {
+            "filename": "/Users/trevorj/Library/Application Support/cura/5.4/cache/cura_packages/CalibrationShapes.curapackage",
+            "package_info": {
+                "author": {
+                    "author_id": "5axes",
+                    "display_name": "5axes",
+                    "email": "cuq@free.fr",
+                    "website": "https://github.com/5axes"
+                },
+                "description": "This plugin adds a menu to create some basic shapes to the scene (cube, cylinder, tube, sphere) and standard test parts. \n\nYou can add standard test / calibration part :\n- Calibration Cube XYZ\n- PLA TempTower 220 - 180\u00b0C\n- PLA TempTower 220 - 190\u00b0C\n- PLA+ TempTower 230 - 200\u00b0C\n- ABS TempTower 250 - 210\u00b0C\n- PETG TempTower 260 - 230\u00b0C\n- PC TempTower 290 - 250\u00b0C\n- Acceleration Tower\n- Retract Tower\n- A XY calibration Test\n- Retract Test part\n- Bridge Spiral Test\n- Thin Wall Test\n- Overhang Test\n- Flow Tower Test\n- Flow Test\n- Max Flow Test\n- Multi Flow Test\n- Tolerance Test\n- Support Test\n- Lithophane Test\n- Dimensional Accuracy Test\n- Linear Pressure Advance Tower\n- Bed Level Calibration Test\n\nAnd Multi-Extruder part :\n- Extruder Offset Calibration\n- Calibration Cube bi-color\n- Cube bi-color\n\n+ 7 postprocessing scripts",
+                "display_name": "Calibration Shapes",
+                "is_active": true,
+                "is_bundled": false,
+                "is_installed": true,
+                "package_id": "CalibrationShapes",
+                "package_type": "plugin",
+                "package_version": "2.2.4",
+                "sdk_version": 8,
+                "sdk_version_semver": "8.3.0",
+                "website": "https://github.com/5axes/Calibration-Shapes"
+            }
+        },
+        "MeshTools": {
+            "filename": "/Users/trevorj/Library/Application Support/cura/5.4/cache/cura_packages/MeshTools.curapackage",
+            "package_info": {
+                "author": {
+                    "author_id": "fieldofview",
+                    "display_name": "fieldOfView",
+                    "email": "aldo@fieldofview.com",
+                    "website": "http://fieldofview.com"
+                },
+                "description": "Adds several mesh analysis and manipulation tools.\n\nThe development of this plugin can be sponsored via Github Sponsors (https://github.com/sponsors/fieldofview) or Paypal (https://www.paypal.me/fieldofview)",
+                "display_name": "Mesh Tools",
+                "is_active": false,
+                "is_bundled": false,
+                "is_installed": true,
+                "package_id": "MeshTools",
+                "package_type": "plugin",
+                "package_version": "3.7.2",
+                "sdk_version": 8,
+                "sdk_version_semver": "8.0.0",
+                "website": "https://github.com/fieldOfView/Cura-MeshTools"
+            }
+        }
+    },
+    "to_install": {},
+    "to_remove": [],
+    "version": 1
+}
