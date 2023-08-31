@@ -16,4 +16,7 @@
 
 # Cura config Linguist ignore
 *.cfg linguist-vendored
-*.json 
+*.json linguist-vendored
+*.xml linguist-vendored
+*.roff linguist-vendored
+*.groff linguist-vendored
