@@ -593,9 +593,9 @@ class VPDScanner(marlinPrinter):
             "arc",
         )
 
-        # print(f"Scanned from radius {max_radius} to {min_radius}.")
-        # print(f"Droplet diameter: {self.DROPLET_DIAMETER}mm.")
-        # print(f"Scanned area: {(math.pi * max_radius**2) - (math.pi * min_radius**2):.1f} mm^2")
+        print(f"Scanned from radius {max_radius} to {min_radius}.")
+        print(f"Droplet diameter: {self.DROPLET_DIAMETER}mm.")
+        print(f"Scanned area: {(math.pi * max_radius**2) - (math.pi * min_radius**2):.1f} mm^2")
 
     def loadSyringe(self):
         """
