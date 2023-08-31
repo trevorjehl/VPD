@@ -4,7 +4,25 @@
 
 # Low-Cost Open Source Vapor Phase Decomposition Scanner
 
-This purpose of this project is to create a low-cost vapor phase decomposition droplet scanner for use in semiconductor research labs. Although traditional semiconductor manufactureres have access to the large, expensive VPD machines to evaluate silicon wafer contamination, these machines can be innacesible for smaller research facilities.
+This purpose of this project is to create a low-cost vapor phase decomposition droplet scanner for use in semiconductor research labs. 
+
+<!-- ## Table of Contents
+
+| Sections      | Description  |
+|---------------|--------------|
+| [Introduction](#introduction) | - Low-Cost Open Source Vapor Phase Decomposition Scanner<br> - Project Purpose |
+| [Rationale](#rationale) | |
+| [Download & Installation](#download--installation) | - Download Methods<br> - Python Version<br> - Project Dependencies |
+| [Command Line Usage](#command-line-usage) | - Generating G-Code Files<br> - Usage on Ender 3 3D Printer |
+| [Modifying The Scan Routine](#modifying-the-scan-routine) | - Custom Scan Documentation<br> - Advanced Modifications<br> - Contribution Guidelines |
+| [Project Goals & Next Steps](#project-goals--next-steps) | - Scan Base Redesign<br> - Wafer Piece Scanning<br> - Increasing Scan Droplet Volume<br> - Enclosure Design<br> - Construction & Replication Instructions |
+| [Credits](#credits) | - Collaborators<br> - Supervision |
+| [License](#license) | - GPL v3 Licensing Information | -->
+
+
+## Rationale
+
+Although traditional semiconductor manufactureres have access to the large, expensive VPD machines to evaluate silicon wafer contamination, these machines can be innacesible for smaller research facilities.
 
 This project uses a modififed low-cost, open source 3D-printer as the basic platform for the scanner. A custom printehead was designed to hold a 1mL acid-resistant (polypropylene) plastic syringe. This repo contains the neccesary code to program complex scanning sequences for the scanning apparatus.
 
@@ -19,10 +37,10 @@ To download the project, copy all project files to your hard drive. This can be 
 To create a new G-Code file, use the following command line syntax:
 
 ```console
-foo@bar:~$ python3 GCodeCaller.py filename.gcode
+foo@bar:~$ python3 TEMPLATE.py filename.gcode
 ```
 
-This will create a `.gcode` file in your local directory according to the settings and steps outlined in GCodeCaller.py. To run this easily on the Ender 3 3D printer (or similar), two methods can be used. For testing, software such as Repetier Host can be used, which communicates with 3D Printers over USB.
+This will create a `.gcode` file in your local directory according to the settings and steps outlined in TEMPLATE.py. To run this easily on the Ender 3 3D printer (or similar), two methods can be used. For testing, software such as Repetier Host can be used, which communicates with 3D Printers over USB.
 
 For more permanent installation, the `.gcode` file can be copied over to the 3D printer's SD/microSD card, which can then be run using the 3D printer's interface
 
@@ -36,7 +54,7 @@ If you do make changes, please contribute per the standards outlined in [CONTRIB
 
 ## Project Goals & Next Steps
 - [ ] Complete redesign of scan base to be CNC machined from Teflon/PTFE
-- [ ] Add wafer piece scanning functionality.
+- [ ] Add wafer piece scanning functionality (vacuum chuck?).
 - [ ] Consider methods of increasing scan droplet volume, as this may aid ICP-MS measurements.
 - [ ] Design encolosure/spill area to contain the system and any acid that may spill during operation.
 - [ ] Create detailed construction/replication instructions with photos for use in other fabs.
