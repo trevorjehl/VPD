@@ -20,3 +20,4 @@
 *.xml linguist-vendored
 *.ROFF linguist-vendored
 *.groff linguist-vendored
+*.3 linguist-vendored
